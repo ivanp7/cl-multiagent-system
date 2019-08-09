@@ -7,9 +7,9 @@
 An enhanced structure is defined with the macro:         
 
 ```lisp                                                            
-(define-structure type-name &key parameters bindings               
-                                 init-form getters setters 
-                                 post-form)
+(define-structure type-name (&key parameters bindings               
+                                  init-form getters setters 
+                                  post-form))
 ```                                                                
 
 The easiest way to explain how *cl-enhanced-structures* works is
@@ -18,31 +18,31 @@ Let's consider the following example:
 
 ```lisp
 (define-structure fibonacci-pair
-  :parameters (&optional (f1 1) (f2 f1))
-  :bindings ((n 1) sum)
-  :init-form (when (> f1 f2) (rotatef f1 f2))
-  :getters (n ; short getter form
-            (first () ; full getter form
-              f1)
-            (second ()
-              f2)
-            sum
-            (proceed (&optional (times 1))
-              (dotimes (i times)
-                (setf f1 f2
-                      f2 sum
-                      sum (+ f1 f2))))
-   :setters ((first () ; full setter form, short form is allowed too
-               (setf f1 value) ; 'value' is a value given in a setf form 
-               (when (> f1 f2)
-                 (setf f2 f1))
-               value)
+  (:parameters (&optional (f1 1) (f2 f1))
+   :bindings ((n 1) sum)
+   :init-form (when (> f1 f2) (rotatef f1 f2))
+   :getters (n ; short getter form
+             (first () ; full getter form
+               f1)
              (second ()
-               (setf f2 value)
-               (when (> f1 f2)
-                 (setf f1 f2))
-               value))
-   :post-form (setf sum (+ f1 f2)))
+               f2)
+             sum
+             (proceed (&optional (times 1))
+               (dotimes (i times)
+                 (setf f1 f2
+                       f2 sum
+                       sum (+ f1 f2)))))
+    :setters ((first () ; full setter form, short form is allowed too
+                (setf f1 value) ; 'value' is a value given in a setf form 
+                (when (> f1 f2)
+                  (setf f2 f1))
+                value)
+              (second ()
+                (setf f2 value)
+                (when (> f1 f2)
+                  (setf f1 f2))
+                value))
+    :post-form (setf sum (+ f1 f2))))
 ```
 
 This generates an instance constructor function

@@ -62,8 +62,8 @@
                                           (push key ,rest-args)))))
                        (nconc ,req-args (nreverse ,rest-args))))))))))
 
-(defmacro define-structure (type-name &key parameters bindings
-                                 init-form getters setters post-form)
+(defmacro define-structure (type-name (&key parameters bindings
+                                       init-form getters setters post-form))
   (alexandria:with-gensyms (lock obj key no-value self-key)
     `(progn
        (defun ,(alexandria:symbolicate "MAKE-" type-name) (,@parameters)
