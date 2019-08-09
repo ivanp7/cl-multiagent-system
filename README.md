@@ -52,7 +52,7 @@ This generates an instance constructor function
   (let ((#:lock615 (bordeaux-threads:make-lock))
         self) ; reference to an instance itself, can be used in user code
     (declare (ignorable self))
-    (let ((n 1) sum) ; bindings
+    (let* ((n 1) sum) ; bindings
       (when (> f1 f2) (rotatef f1 f2)) ; init-form
       (let ((#:obj616
              (lambda (#:key617 &optional (value '#:no-value646) &rest args)

@@ -69,7 +69,7 @@
        (defun ,(alexandria:symbolicate "MAKE-" type-name) (,@parameters)
          (let ((,lock (bt:make-lock)) self)
            (declare (ignorable self))
-           (let (,@bindings)
+           (let* (,@bindings)
              ,init-form
              (let ((,obj 
                      (lambda (,key &optional (value ',no-value)
