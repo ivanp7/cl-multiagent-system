@@ -28,7 +28,8 @@ Let's consider the following example:
              sum
              (proceed (&optional (times 1))
                (dotimes (i times)
-                 (setf f1 f2
+                 (setf n (1+ n)
+                       f1 f2
                        f2 sum
                        sum (+ f1 f2)))))
     :setters ((first () ; full setter form, short form is allowed too
