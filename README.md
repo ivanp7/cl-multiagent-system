@@ -8,8 +8,7 @@ An enhanced structure is defined with the macro:
 
 ```lisp                                                            
 (define-structure type-name (&key parameters bindings               
-                                  init-form getters setters 
-                                  post-form))
+                                  init-forms getters setters post-forms))
 ```                                                                
 
 The easiest way to explain how *cl-enhanced-structures* works is
@@ -20,7 +19,7 @@ Let's consider the following example:
 (define-structure fibonacci-pair
   (:parameters (&optional (f1 1) (f2 f1))
    :bindings ((n 1) sum)
-   :init-form (when (> f1 f2) (rotatef f1 f2))
+   :init-forms ((when (> f1 f2) (rotatef f1 f2)))
    :getters (n ; short getter form
              (first () ; full getter form
                f1)
@@ -42,7 +41,7 @@ Let's consider the following example:
                 (when (> f1 f2)
                   (setf f1 f2))
                 value))
-    :post-form (setf sum (+ f1 f2))))
+    :post-forms ((setf sum (+ f1 f2)))))
 ```
 
 This generates an instance constructor function

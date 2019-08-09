@@ -63,14 +63,14 @@
                        (nconc ,req-args (nreverse ,rest-args))))))))))
 
 (defmacro define-structure (type-name (&key parameters bindings
-                                       init-form getters setters post-form))
+                                       init-forms getters setters post-forms))
   (alexandria:with-gensyms (lock obj key no-value self-key)
     `(progn
        (defun ,(alexandria:symbolicate "MAKE-" type-name) (,@parameters)
          (let ((,lock (bt:make-lock)) self)
            (declare (ignorable self))
            (let* (,@bindings)
-             ,init-form
+             ,@init-forms
              (let ((,obj 
                      (lambda (,key &optional (value ',no-value)
                                    &rest args)
@@ -91,7 +91,7 @@
                                  setters)
                              (,self-key (setf self value))))))))
                (funcall ,obj ',self-key ,obj)
-               ,post-form
+               ,@post-forms
                ,obj))))
        ,@(mapcar (lambda (spec)
                    (multiple-value-bind (name params key vars arg-code)
