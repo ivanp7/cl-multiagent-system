@@ -68,7 +68,8 @@ This generates an instance constructor function
                      (:proceed
                        (destructuring-bind (&optional (times 1)) args
                          (dotimes (i times)
-                           (setf f1 f2
+                           (setf n (1+ n)
+                                 f1 f2
                                  f2 sum
                                  sum (+ f1 f2))))))
                    (ecase #:key617 ; setters
