@@ -5,5 +5,5 @@
 (defpackage #:enhanced-structures
   (:use #:cl)
   (:nicknames #:es #:estruct)
-  (:export :define-structure))
+  (:export :define-structure :self :value))
 
