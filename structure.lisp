@@ -65,22 +65,22 @@
 (defmacro define-structure (type-name (&key parameters body-macros 
                                             bindings init-forms getters 
                                             setters post-forms))
-  (alexandria:with-gensyms (obj key no-value self-key)
+  (alexandria:with-gensyms (obj key missing-value self-key)
     `(progn
        (deftype ,type-name () '(function (symbol &optional * &rest *) *))
        (defun ,(alexandria:symbolicate "MAKE-" type-name) (,@parameters)
-         (let ((lock (bt:make-recursive-lock)) self)
+         (let ((no-value (gensym)) (lock (bt:make-recursive-lock)) self)
            (declare (ignorable self))
            (macrolet (,@body-macros)
              (let* (,@bindings)
                ,@init-forms
                (let ((,obj 
-                       (lambda (,key &optional (value ',no-value)
-                                     &rest args)
+                       (lambda (,key &optional (value no-value) &rest args)
                          (declare (ignorable value args)
                                   (type symbol ,key))
                          (bt:with-recursive-lock-held (lock)
-                           (if (eq value ',no-value)
+                           (if (or (eq value ',missing-value) 
+                                   (eq value no-value))
                              (ecase ,key
                                ,@(mapcar
                                    (lambda (spec)
@@ -103,7 +103,7 @@
                      `(defmacro ,name (,type-name ,@params)
                         (declare (ignorable ,@vars))
                         (let ((args ,arg-code))
-                          `(funcall ,,`,type-name ,,key ,,`'',no-value 
+                          `(funcall ,,`,type-name ,,key ,,`'',missing-value 
                                     ,@args)))))
                  getters)
        ,@(mapcar (lambda (spec)
