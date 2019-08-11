@@ -65,7 +65,7 @@ an instance constructor function
       (let* ((n 1) sum) ; bindings
         (when (> f1 f2) (rotatef f1 f2)) ; init-form
         (let ((#:obj616
-               (lambda (#:key617 &optional (value '#:no-value646) &rest args)
+               (lambda (#:key617 &optional (value no-value) &rest args)
                  (declare (ignorable value args))
                  ;; access is synchronized
                  (bordeaux-threads:with-recursive-lock-held (lock)
