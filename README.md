@@ -7,8 +7,8 @@
 An enhanced structure is defined with the macro:         
 
 ```lisp                                                            
-(define-structure type-name (&key parameters bindings               
-                                  init-forms getters setters post-forms))
+(define-structure type-name (&key parameters body-macros bindings init-forms 
+                                  getters setters post-forms))
 ```                                                                
 
 The easiest way to explain how *cl-enhanced-structures* works is
@@ -18,8 +18,11 @@ Let's consider the following example:
 ```lisp
 (define-structure fibonacci-pair
   (:parameters (&optional (f1 1) (f2 f1))
+   :body-macros ((norm (x y)
+                   (when (> x y)
+                     (setf x y))))
    :bindings ((n 1) sum)
-   :init-forms ((when (> f1 f2) (rotatef f1 f2)))
+   :init-forms ((norm f1 f2))
    :getters (n ; short getter form
              (first () ; full getter form
                f1)
@@ -34,13 +37,11 @@ Let's consider the following example:
                        sum (+ f1 f2)))))
     :setters ((first () ; full setter form, short form is allowed too
                 (setf f1 value) ; 'value' is a value given in a setf form 
-                (when (> f1 f2)
-                  (setf f2 f1))
+                (norm f1 f2)
                 value)
               (second ()
                 (setf f2 value)
-                (when (> f1 f2)
-                  (setf f1 f2))
+                (norm f1 f2)
                 value))
     :post-forms ((setf sum (+ f1 f2)))))
 ```
@@ -58,44 +59,45 @@ an instance constructor function
   (let ((lock (bordeaux-threads:make-lock))
         self) ; reference to an instance itself, can be used in user code
     (declare (ignorable self))
-    (let* ((n 1) sum) ; bindings
-      (when (> f1 f2) (rotatef f1 f2)) ; init-form
-      (let ((#:obj616
-             (lambda (#:key617 &optional (value '#:no-value646) &rest args)
-               (declare (ignorable value args))
-               ;; access is synchronized
-               (bordeaux-threads:with-lock-held (lock)
-                 (if (eq value '#:no-value646)
-                   (ecase #:key617 ; getters
-                     (:n n)
-                     (:first (destructuring-bind () args f1))
-                     (:second (destructuring-bind () args f2))
-                     (:sum sum)
-                     (:proceed
-                       (destructuring-bind (&optional (times 1)) args
-                         (dotimes (i times)
-                           (setf n (1+ n)
-                                 f1 f2
-                                 f2 sum
-                                 sum (+ f1 f2))))))
-                   (ecase #:key617 ; setters
-                     (:first
-                       (destructuring-bind () args
-                         (setf f1 value)
-                         (when (> f1 f2) 
-                           (setf f2 f1))
-                         value))
-                     (:second
-                       (destructuring-bind () args
-                         (setf f2 value)
-                         (when (> f1 f2) 
-                           (setf f1 f2))
-                         value))
-                     (#:self-key619
-                      (setf self value))))))))
-        (funcall #:obj616 '#:self-key619 #:obj616) ; setting 'self' variable
-        (setf sum (+ f1 f2)) ; post-form
-        (the fibonacci-pair #:obj616)))))
+    (macrolet ((norm (x y)
+                 (when (> x y)
+                   (setf x y))))
+      (let* ((n 1) sum) ; bindings
+        (when (> f1 f2) (rotatef f1 f2)) ; init-form
+        (let ((#:obj616
+               (lambda (#:key617 &optional (value '#:no-value646) &rest args)
+                 (declare (ignorable value args))
+                 ;; access is synchronized
+                 (bordeaux-threads:with-lock-held (lock)
+                   (if (eq value '#:no-value646)
+                     (ecase #:key617 ; getters
+                       (:n n)
+                       (:first (destructuring-bind () args f1))
+                       (:second (destructuring-bind () args f2))
+                       (:sum sum)
+                       (:proceed
+                         (destructuring-bind (&optional (times 1)) args
+                           (dotimes (i times)
+                             (setf n (1+ n)
+                                   f1 f2
+                                   f2 sum
+                                   sum (+ f1 f2))))))
+                     (ecase #:key617 ; setters
+                       (:first
+                         (destructuring-bind () args
+                           (setf f1 value)
+                           (norm f1 f2)
+                           value))
+                       (:second
+                         (destructuring-bind () args
+                           (setf f2 value)
+                           (norm f1 f2)
+                           value))
+                       (#:self-key619
+                        (setf self value))))))))
+          (funcall #:obj616 '#:self-key619 #:obj616) ; setting 'self' variable
+          (setf sum (+ f1 f2)) ; post-form
+          (the fibonacci-pair #:obj616))))))
 ```
 
 getter macros

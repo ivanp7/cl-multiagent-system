@@ -62,38 +62,41 @@
                                           (push key ,rest-args)))))
                        (nconc ,req-args (nreverse ,rest-args))))))))))
 
-(defmacro define-structure (type-name (&key parameters bindings
-                                       init-forms getters setters post-forms))
+(defmacro define-structure (type-name (&key parameters body-macros 
+                                            bindings init-forms getters 
+                                            setters post-forms))
   (alexandria:with-gensyms (obj key no-value self-key)
     `(progn
        (deftype ,type-name () '(function (symbol &optional * &rest *) *))
        (defun ,(alexandria:symbolicate "MAKE-" type-name) (,@parameters)
          (let ((lock (bt:make-lock)) self)
            (declare (ignorable self))
-           (let* (,@bindings)
-             ,@init-forms
-             (let ((,obj 
-                     (lambda (,key &optional (value ',no-value)
-                                   &rest args)
-                       (declare (ignorable value args))
-                       (bt:with-lock-held (lock)
-                         (if (eq value ',no-value)
-                           (ecase ,key
-                             ,@(mapcar
-                                 (lambda (spec)
-                                   (construct-accessor-case 
-                                     spec (lambda (var) `,var)))
-                                 getters))
-                           (ecase ,key
-                             ,@(mapcar
-                                 (lambda (spec)
-                                   (construct-accessor-case
-                                     spec (lambda (var) `(setf ,var value))))
-                                 setters)
-                             (,self-key (setf self value))))))))
-               (funcall ,obj ',self-key ,obj)
-               ,@post-forms
-               (the ,type-name ,obj)))))
+           (macrolet (,@body-macros)
+             (let* (,@bindings)
+               ,@init-forms
+               (let ((,obj 
+                       (lambda (,key &optional (value ',no-value)
+                                     &rest args)
+                         (declare (ignorable value args)
+                                  (type symbol ,key))
+                         (bt:with-lock-held (lock)
+                           (if (eq value ',no-value)
+                             (ecase ,key
+                               ,@(mapcar
+                                   (lambda (spec)
+                                     (construct-accessor-case 
+                                       spec (lambda (var) `,var)))
+                                   getters))
+                             (ecase ,key
+                               ,@(mapcar
+                                   (lambda (spec)
+                                     (construct-accessor-case
+                                       spec (lambda (var) `(setf ,var value))))
+                                   setters)
+                               (,self-key (setf self value))))))))
+                 (funcall ,obj ',self-key ,obj)
+                 ,@post-forms
+                 (the ,type-name ,obj))))))
        ,@(mapcar (lambda (spec)
                    (multiple-value-bind (name params key vars arg-code)
                        (get-accessor-macro-elements spec type-name)
