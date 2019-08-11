@@ -45,7 +45,13 @@ Let's consider the following example:
     :post-forms ((setf sum (+ f1 f2)))))
 ```
 
-This generates an instance constructor function
+This generates a type definition
+
+```lisp
+(deftype fibonacci-pair () '(function (symbol &optional * &rest *) *))
+```
+
+an instance constructor function
 
 ```lisp
 (defun make-fibonacci-pair (&optional (f1 1) (f2 f1))
@@ -89,7 +95,7 @@ This generates an instance constructor function
                       (setf self value))))))))
         (funcall #:obj616 '#:self-key619 #:obj616) ; setting 'self' variable
         (setf sum (+ f1 f2)) ; post-form
-        #:obj616))))
+        (the fibonacci-pair #:obj616)))))
 ```
 
 getter macros

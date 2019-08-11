@@ -66,6 +66,7 @@
                                        init-forms getters setters post-forms))
   (alexandria:with-gensyms (lock obj key no-value self-key)
     `(progn
+       (deftype ,type-name () '(function (symbol &optional * &rest *) *))
        (defun ,(alexandria:symbolicate "MAKE-" type-name) (,@parameters)
          (let ((,lock (bt:make-lock)) self)
            (declare (ignorable self))
@@ -92,7 +93,7 @@
                              (,self-key (setf self value))))))))
                (funcall ,obj ',self-key ,obj)
                ,@post-forms
-               ,obj))))
+               (the ,type-name ,obj)))))
        ,@(mapcar (lambda (spec)
                    (multiple-value-bind (name params key vars arg-code)
                        (get-accessor-macro-elements spec type-name)
