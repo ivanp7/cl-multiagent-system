@@ -55,7 +55,7 @@ an instance constructor function
 
 ```lisp
 (defun make-fibonacci-pair (&optional (f1 1) (f2 f1))
-  (let ((#:lock615 (bordeaux-threads:make-lock))
+  (let ((lock (bordeaux-threads:make-lock))
         self) ; reference to an instance itself, can be used in user code
     (declare (ignorable self))
     (let* ((n 1) sum) ; bindings
@@ -64,7 +64,7 @@ an instance constructor function
              (lambda (#:key617 &optional (value '#:no-value646) &rest args)
                (declare (ignorable value args))
                ;; access is synchronized
-               (bordeaux-threads:with-lock-held (#:lock615)
+               (bordeaux-threads:with-lock-held (lock)
                  (if (eq value '#:no-value646)
                    (ecase #:key617 ; getters
                      (:n n)

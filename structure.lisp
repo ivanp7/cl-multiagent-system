@@ -64,11 +64,11 @@
 
 (defmacro define-structure (type-name (&key parameters bindings
                                        init-forms getters setters post-forms))
-  (alexandria:with-gensyms (lock obj key no-value self-key)
+  (alexandria:with-gensyms (obj key no-value self-key)
     `(progn
        (deftype ,type-name () '(function (symbol &optional * &rest *) *))
        (defun ,(alexandria:symbolicate "MAKE-" type-name) (,@parameters)
-         (let ((,lock (bt:make-lock)) self)
+         (let ((lock (bt:make-lock)) self)
            (declare (ignorable self))
            (let* (,@bindings)
              ,@init-forms
@@ -76,7 +76,7 @@
                      (lambda (,key &optional (value ',no-value)
                                    &rest args)
                        (declare (ignorable value args))
-                       (bt:with-lock-held (,lock)
+                       (bt:with-lock-held (lock)
                          (if (eq value ',no-value)
                            (ecase ,key
                              ,@(mapcar
