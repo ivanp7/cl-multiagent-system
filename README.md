@@ -56,7 +56,7 @@ an instance constructor function
 
 ```lisp
 (defun make-fibonacci-pair (&optional (f1 1) (f2 f1))
-  (let ((lock (bordeaux-threads:make-lock))
+  (let ((lock (bordeaux-threads:make-recursive-lock))
         self) ; reference to an instance itself, can be used in user code
     (declare (ignorable self))
     (macrolet ((norm (x y)
@@ -68,7 +68,7 @@ an instance constructor function
                (lambda (#:key617 &optional (value '#:no-value646) &rest args)
                  (declare (ignorable value args))
                  ;; access is synchronized
-                 (bordeaux-threads:with-lock-held (lock)
+                 (bordeaux-threads:with-recursive-lock-held (lock)
                    (if (eq value '#:no-value646)
                      (ecase #:key617 ; getters
                        (:n n)

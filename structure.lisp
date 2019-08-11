@@ -69,7 +69,7 @@
     `(progn
        (deftype ,type-name () '(function (symbol &optional * &rest *) *))
        (defun ,(alexandria:symbolicate "MAKE-" type-name) (,@parameters)
-         (let ((lock (bt:make-lock)) self)
+         (let ((lock (bt:make-recursive-lock)) self)
            (declare (ignorable self))
            (macrolet (,@body-macros)
              (let* (,@bindings)
@@ -79,7 +79,7 @@
                                      &rest args)
                          (declare (ignorable value args)
                                   (type symbol ,key))
-                         (bt:with-lock-held (lock)
+                         (bt:with-recursive-lock-held (lock)
                            (if (eq value ',no-value)
                              (ecase ,key
                                ,@(mapcar
