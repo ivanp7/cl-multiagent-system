@@ -19,8 +19,8 @@ Let's consider the following example:
 (define-structure fibonacci-pair
   (:parameters (&optional (f1 1) (f2 f1))
    :body-macros ((norm (x y)
-                   (when (> x y)
-                     (setf x y))))
+                   `(when (> ,x ,y)
+                      (setf ,x ,y))))
    :bindings ((n 1) sum)
    :init-forms ((norm f1 f2))
    :getters (n ; short getter form
@@ -60,8 +60,8 @@ an instance constructor function
         self) ; reference to an instance itself, can be used in user code
     (declare (ignorable self))
     (macrolet ((norm (x y)
-                 (when (> x y)
-                   (setf x y))))
+                 `(when (> ,x ,y)
+                    (setf ,x ,y))))
       (let* ((n 1) sum) ; bindings
         (when (> f1 f2) (rotatef f1 f2)) ; init-form
         (let ((#:obj616
