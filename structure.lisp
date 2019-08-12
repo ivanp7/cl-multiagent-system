@@ -58,8 +58,8 @@
                                         :do
                                         (unless (and key-presence-var-used
                                                      (not key-present))
-                                          (push key-value ,rest-args)
-                                          (push key ,rest-args)))))
+                                          (push key ,rest-args)
+                                          (push key-value ,rest-args)))))
                        (nconc ,req-args (nreverse ,rest-args))))))))))
 
 (defmacro define-structure (type-name (&key parameters body-macros 
