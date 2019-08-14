@@ -69,7 +69,8 @@ an instance constructor function
                  (declare (ignorable value args))
                  ;; access is synchronized
                  (bordeaux-threads:with-recursive-lock-held (lock)
-                   (if (eq value '#:no-value646)
+                   (if (or (eq value '#:missing-value720)
+                           (eq value no-value))
                      (ecase #:key617 ; getters
                        (:n n)
                        (:first (destructuring-bind () args f1))
@@ -81,7 +82,13 @@ an instance constructor function
                              (setf n (1+ n)
                                    f1 f2
                                    f2 sum
-                                   sum (+ f1 f2))))))
+                                   sum (+ f1 f2)))))
+                       (:acquire-lock
+                         (bt:acquire-recursive-lock lock)
+                         t)
+                       (:release-lock
+                         (bt:release-recursive-lock lock)
+                         t))
                      (ecase #:key617 ; setters
                        (:first
                          (destructuring-bind () args
@@ -106,25 +113,25 @@ getter macros
 (defmacro fibonacci-pair-n (fibonacci-pair)
   (declare (ignorable))
   (let ((args nil))
-    `(funcall ,fibonacci-pair ,:n ,''#:no-value646
+    `(funcall ,fibonacci-pair ,:n ,''#:missing-value720
               ,@args)))
 
 (defmacro fibonacci-pair-first (fibonacci-pair)
   (declare (ignorable))
   (let ((args nil))
-    `(funcall ,fibonacci-pair ,:first ,''#:no-value646
+    `(funcall ,fibonacci-pair ,:first ,''#:missing-value720
               ,@args)))
 
 (defmacro fibonacci-pair-second (fibonacci-pair)
   (declare (ignorable))
   (let ((args nil))
-    `(funcall ,fibonacci-pair ,:second ,''#:no-value646
+    `(funcall ,fibonacci-pair ,:second ,''#:missing-value720
               ,@args)))
 
 (defmacro fibonacci-pair-sum (fibonacci-pair)
   (declare (ignorable))
   (let ((args nil))
-    `(funcall ,fibonacci-pair ,:sum ,''#:no-value646
+    `(funcall ,fibonacci-pair ,:sum ,''#:missing-value720
               ,@args)))
 
 (defmacro fibonacci-pair-proceed (fibonacci-pair &optional (times 1))
@@ -150,12 +157,24 @@ getter macros
                                (push key-value #:g662)
                                (push key #:g662))))
             (nconc #:g661 (nreverse #:g662)))))
-    `(funcall ,fibonacci-pair ,:proceed ,''#:no-value646
+    `(funcall ,fibonacci-pair ,:proceed ,''#:missing-value720
               ,@args)))
 
+(defmacro fibonacci-pair-acquire-lock (fibonacci-pair)
+  (declare (ignorable))
+  (let ((args nil))
+    `(funcall ,fibonacci-pair ,:acquire-lock ,''#:missing-value720
+              ,@args)))
+
+(defmacro fibonacci-pair-release-lock (fibonacci-pair)
+  (declare (ignorable))
+  (let ((args nil))
+    `(funcall ,fibonacci-pair ,:release-lock ,''#:missing-value720
+              ,@args)))
+  
 ```
 
-and setters
+setter macros
 
 ```lisp
 (defsetf fibonacci-pair-first (fibonacci-pair) (new-value)
@@ -169,6 +188,16 @@ and setters
   (let ((args nil))
     `(funcall ,fibonacci-pair ,:second ,new-value
               ,@args))))
+```
+
+and a lock control wrapper
+
+```lisp
+(defmacro with-fibonacci-pair-lock-held ((fibonacci-pair) &body body)
+ `(progn
+     (funcall ,fibonacci-pair :acquire-lock)
+     ,@enhanced-structures::body
+     (funcall ,fibonacci-pair :release-lock)))
 ```
 
 ## Author                                                          

@@ -66,6 +66,14 @@
                                             bindings init-forms getters 
                                             setters post-forms))
   (alexandria:with-gensyms (obj key missing-value self-key)
+    (setf getters
+          (nconc getters
+                 '((acquire-lock ()
+                     (bt:acquire-recursive-lock lock)
+                     t)
+                   (release-lock ()
+                     (bt:release-recursive-lock lock)
+                     t))))
     `(progn
        (deftype ,type-name () '(function (symbol &optional * &rest *) *))
        (defun ,(alexandria:symbolicate "MAKE-" type-name) (,@parameters)
@@ -114,5 +122,11 @@
                         (let ((args ,arg-code))
                           `(funcall ,,`,type-name ,,key ,new-value 
                                     ,@args)))))
-                 setters))))
+                 setters)
+       (defmacro ,(alexandria:symbolicate 
+                    "WITH-" type-name "-LOCK-HELD") ((,type-name) &body body)
+         `(progn
+            (funcall ,,`,type-name :acquire-lock)
+            ,@body
+            (funcall ,,`,type-name :release-lock))))))
 
