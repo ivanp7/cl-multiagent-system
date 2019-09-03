@@ -62,22 +62,21 @@
                                           (push key-value ,rest-args)))))
                        (nconc ,req-args (nreverse ,rest-args))))))))))
 
-(defmacro define-structure (type-name (&key parameters body-macros 
-                                            bindings init-forms getters 
-                                            setters post-forms))
-  (alexandria:with-gensyms (obj key missing-value self-key)
+(defmacro define-structure (type-name &key parameters body-macros bindings 
+                                      init-forms getters setters post-forms)
+  (alexandria:with-gensyms (obj key missing-value self-key lock)
     (setf getters
           (nconc getters
-                 '((acquire-lock ()
-                     (bt:acquire-recursive-lock lock)
+                 `((acquire-lock ()
+                     (bt:acquire-recursive-lock ,lock)
                      t)
                    (release-lock ()
-                     (bt:release-recursive-lock lock)
+                     (bt:release-recursive-lock ,lock)
                      t))))
     `(progn
        (deftype ,type-name () '(function (symbol &optional * &rest *) *))
        (defun ,(alexandria:symbolicate "MAKE-" type-name) (,@parameters)
-         (let ((no-value (gensym)) (lock (bt:make-recursive-lock)) self)
+         (let ((no-value (gensym)) (,lock (bt:make-recursive-lock)) self)
            (declare (ignorable self))
            (macrolet (,@body-macros)
              (let* (,@bindings)
@@ -86,7 +85,7 @@
                        (lambda (,key &optional (value no-value) &rest args)
                          (declare (ignorable value args)
                                   (type symbol ,key))
-                         (bt:with-recursive-lock-held (lock)
+                         (bt:with-recursive-lock-held (,lock)
                            (if (or (eq value ',missing-value) 
                                    (eq value no-value))
                              (ecase ,key

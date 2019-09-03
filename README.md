@@ -7,8 +7,8 @@
 An enhanced structure is defined with the macro:         
 
 ```lisp                                                            
-(define-structure type-name (&key parameters body-macros bindings init-forms 
-                                  getters setters post-forms))
+(define-structure type-name &key parameters body-macros bindings 
+                  init-forms getters setters post-forms)
 ```                                                                
 
 The easiest way to explain how *cl-enhanced-structures* works is
@@ -17,33 +17,33 @@ Let's consider the following example:
 
 ```lisp
 (define-structure fibonacci-pair
-  (:parameters (&optional (f1 1) (f2 f1))
-   :body-macros ((norm (x y)
-                   `(when (> ,x ,y)
-                      (setf ,x ,y))))
-   :bindings ((n 1) sum)
-   :init-forms ((norm f1 f2))
-   :getters (n ; short getter form
-             (first () ; full getter form
-               f1)
+  :parameters (&optional (f1 1) (f2 f1))
+  :body-macros ((norm (x y)
+                  `(when (> ,x ,y)
+                     (setf ,x ,y))))
+  :bindings ((n 1) sum)
+  :init-forms ((norm f1 f2))
+  :getters (n ; short getter form
+            (first () ; full getter form
+              f1)
+            (second ()
+              f2)
+            sum
+            (proceed (&optional (times 1))
+              (dotimes (i times)
+                (setf n (1+ n)
+                      f1 f2
+                      f2 sum
+                      sum (+ f1 f2)))))
+   :setters ((first () ; full setter form, short form is allowed too
+               (setf f1 value) ; 'value' is a value given in a setf form 
+               (norm f1 f2)
+               value)
              (second ()
-               f2)
-             sum
-             (proceed (&optional (times 1))
-               (dotimes (i times)
-                 (setf n (1+ n)
-                       f1 f2
-                       f2 sum
-                       sum (+ f1 f2)))))
-    :setters ((first () ; full setter form, short form is allowed too
-                (setf f1 value) ; 'value' is a value given in a setf form 
-                (norm f1 f2)
-                value)
-              (second ()
-                (setf f2 value)
-                (norm f1 f2)
-                value))
-    :post-forms ((setf sum (+ f1 f2)))))
+               (setf f2 value)
+               (norm f1 f2)
+               value))
+   :post-forms ((setf sum (+ f1 f2))))
 ```
 
 This generates a type definition
