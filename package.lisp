@@ -2,8 +2,9 @@
 ;;
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
-(defpackage #:enhanced-structures
+(defpackage #:cl-synchronized-entity
   (:use #:cl)
-  (:nicknames #:es #:estruct)
-  (:export :define-structure :no-value :self :value))
+  (:nicknames #:cl-se #:cl-sentity)
+  (:export :*accessor-name-fn* :*constructor-name-fn* 
+           :define-synchronized-entity :self))
 
