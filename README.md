@@ -5,6 +5,8 @@ designed for multithreaded applications.
 
 ## Usage                                                           
 
+### Entity
+
 An entity is defined with the macro         
 
 ```lisp                                                            
@@ -75,6 +77,17 @@ The macro defines:
 
 Initialization and accessors body code can use `self` binding, which is
 assigned to the entity instance itself.
+
+### Agent
+
+The library includes an agent facility to help develop multiagent systems.
+The code in `agent.lisp` is self-documentary and could be considered as an
+example of use of `define-synchronized-entity`.
+
+### Synchronized queue
+
+As a bonus, the library provides public interface to synchronized queues
+(see `queue.lisp` for details).
 
 ## Author                                                          
 

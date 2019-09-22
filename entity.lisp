@@ -13,7 +13,9 @@
     (mapcar (lambda (accessor)
               `(,(accessor-full-name accessor)
                  (,@(accessor-full-lambda-list accessor))
-                 ,@(accessor-body accessor)))
+                 (let ((self self))
+                   (declare (ignorable self))
+                   ,@(accessor-body accessor))))
             accessors))
 
   (defun replace-resources-with-locks (accessors)
@@ -60,7 +62,7 @@
            (apply #',(accessor-full-name accessor) ,args)))))
 
   (defun define-constructor (entity-type lambda-list declarations
-                             initialization accessors no-value)
+                             initialization accessors)
     (let ((rw-locks-vars (replace-resources-with-locks accessors))
           (getters (remove-if-not 
                      (lambda (accessor) 
@@ -75,10 +77,13 @@
              (labels (,@(labels-declarations accessors))
                (let (,@(loop :for rwlock-vars :in rw-locks-vars
                              :append (read-write-lock-bindings rwlock-vars)))
+                 (declare ,@(loop :for rwlock-vars :in rw-locks-vars
+                                  :append (read-write-lock-declarations 
+                                            rwlock-vars)))
                  (setf self
                        (lambda (,key ,value &rest ,args)
                          (declare (type symbol ,key))
-                         (if (eq ,value ',no-value)
+                         (if (eq ,value +no-value+)
                            (ecase ,key
                              ,@(mapcar (lambda (getter) 
                                          (construct-case getter args))
@@ -94,6 +99,9 @@
 
 (deftype synchronized-entity () '(function (symbol * &rest *) *))
 
+(alexandria:define-constant +no-value+ '#.(gensym "NO-VALUE") 
+                            :test (constantly t))
+
 (defmacro define-synchronized-entity (entity-type lambda-list 
                                       (&key declarations initialization) 
                                       &rest accessors)
@@ -102,12 +110,11 @@
             (length (remove-duplicates accessors :test #'equal 
                                        :key #'accessor-full-name)))
     (error "Multiple accessor definitions provided."))
-  (alexandria:with-gensyms (no-value)
-    `(progn
-       (deftype ,entity-type () 'synchronized-entity)
-       ,(define-constructor entity-type lambda-list declarations initialization 
-                            accessors no-value)
-       ,@(mapcar (lambda (accessor) 
-                   (define-accessor entity-type accessor no-value))
-                 accessors))))
+  `(progn
+     (deftype ,entity-type () 'synchronized-entity)
+     ,@(mapcar (lambda (accessor) 
+                 (define-accessor entity-type accessor))
+               accessors)
+     ,(define-constructor entity-type lambda-list declarations initialization 
+                          accessors)))
 

@@ -8,7 +8,8 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-read-write-lock-vars ()
-    (list (gensym) (gensym) (gensym) (gensym)))
+    (list (gensym "READ-COUNT") (gensym "COUNT-ACCESS") 
+          (gensym "RESOURCE-ACCESS") (gensym "SERVICE-QUEUE")))
 
   (defun rw-lock-read-count (lock-vars)
     (first lock-vars))
@@ -27,7 +28,11 @@
       (,(rw-lock-read-count-access lock-vars) 
         #1=(bt:make-semaphore :count 1))
       (,(rw-lock-resource-access lock-vars) #1#)
-      (,(rw-lock-service-queue lock-vars) #1#))))
+      (,(rw-lock-service-queue lock-vars) #1#)))
+
+  (defun read-write-lock-declarations (lock-vars)
+    `((ignorable ,(rw-lock-read-count lock-vars) 
+                 ,(rw-lock-read-count-access lock-vars)))))
 
 (defmacro with-read-write-lock-held ((write-locks read-locks) &body body)
   (flet ((writer-entry (lock-vars)

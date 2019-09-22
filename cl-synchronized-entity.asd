@@ -16,5 +16,7 @@ designed for multithreaded applications."
    (:file "accessor-utils" :depends-on ("package"))
    (:file "accessor" :depends-on ("accessor-utils"))
    (:file "rw-lock" :depends-on ("package"))
-   (:file "entity" :depends-on ("accessor" "rw-lock"))))
+   (:file "entity" :depends-on ("accessor" "rw-lock"))
+   (:file "queue" :depends-on ("package"))
+   (:file "agent" :depends-on ("entity" "queue"))))
 

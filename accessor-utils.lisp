@@ -71,7 +71,9 @@
     (getf (cddar accessor) :reads))
 
   (defun accessor-visibility (accessor)
-    (getf (cddar accessor) :visibility :public))
+    (ecase (getf (cddar accessor) :visibility :public)
+      (:public :public)
+      (:private :private)))
 
   (defun accessor-body (accessor)
     (cdr accessor)))
