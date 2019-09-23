@@ -20,8 +20,10 @@
                                (type (or null bt:thread) thread)))
   type-id instance-id loop-fn start-fn stop-fn running-p
   (setf loop-fn) (setf start-fn) (setf stop-fn)
-  ((message ())
-   (queue-pop message-queue))
+  ((message (&key keep))
+   (if keep
+     (queue-front message-queue)
+     (queue-pop message-queue)))
   (((setf message) (msg))
    (queue-push message-queue msg))
   ((data (key &optional default) :reads (data))
