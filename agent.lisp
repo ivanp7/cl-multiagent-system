@@ -4,7 +4,9 @@
 
 (define-synchronized-entity agent (type-id instance-id loop-fn
                                    &key start-fn stop-fn data-plist
-                                   &aux running-p (message-queue (make-queue))
+                                   &aux running-p 
+                                   (message-queue (make-queue 
+                                                    :empty-value +no-value+))
                                    (data (alexandria:plist-hash-table 
                                            data-plist)) thread)
                             (:declarations 
@@ -25,7 +27,7 @@
   ((data (key &optional default) :reads (data))
    (gethash key data default))
   (((setf data) (value key) :writes (data))
-   (if (eq value +no-value+)
+   (if (no-value-p value)
      (remhash key data)
      (setf (gethash key data) value)))
   ((start () :writes (running-p) :reads (loop-fn start-fn stop-fn))

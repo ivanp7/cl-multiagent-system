@@ -23,7 +23,7 @@
              (mapcar #'accessor-written-resources accessors)) 
            (all-written-resources 
              (reduce (lambda (s1 s2) (union s1 s2 :test #'equal))
-                     written-resources-lists))
+                     written-resources-lists :initial-value ()))
            (groups-map (make-hash-table :test 'equal)) 
            (rw-locks-map (make-hash-table :test 'equal)))
       (dolist (res all-written-resources)
@@ -83,7 +83,7 @@
                  (setf self
                        (lambda (,key ,value &rest ,args)
                          (declare (type symbol ,key))
-                         (if (eq ,value +no-value+)
+                         (if (no-value-p ,value)
                            (ecase ,key
                              ,@(mapcar (lambda (getter) 
                                          (construct-case getter args))
@@ -101,6 +101,9 @@
 
 (alexandria:define-constant +no-value+ '#.(gensym "NO-VALUE") 
                             :test (constantly t))
+
+(defmacro no-value-p (value)
+  `(eq ,value +no-value+))
 
 (defmacro define-synchronized-entity (entity-type lambda-list 
                                       (&key declarations initialization) 
