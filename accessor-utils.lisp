@@ -52,28 +52,34 @@
                  (error "No store variable provided for accessor ~A."
                         accessor)))))
 
+  (defmacro accessor-descriptor-plist (accessor)
+    `(cddar ,accessor))
+
   (defun accessor-written-resources (accessor)
-    (getf (cddar accessor) :writes))
+    (getf (accessor-descriptor-plist accessor) :writes))
 
   (defun (setf accessor-write-locks) (list accessor)
-    (setf (getf (cddar accessor) :writes) list))
+    (setf (getf (accessor-descriptor-plist accessor) :writes) list))
 
   (defun accessor-write-locks (accessor)
-    (getf (cddar accessor) :writes))
+    (getf (accessor-descriptor-plist accessor) :writes))
 
   (defun accessor-read-resources (accessor)
-    (getf (cddar accessor) :reads))
+    (getf (accessor-descriptor-plist accessor) :reads))
 
   (defun (setf accessor-read-locks) (list accessor)
-    (setf (getf (cddar accessor) :reads) list))
+    (setf (getf (accessor-descriptor-plist accessor) :reads) list))
 
   (defun accessor-read-locks (accessor)
-    (getf (cddar accessor) :reads))
+    (getf (accessor-descriptor-plist accessor) :reads))
 
   (defun accessor-visibility (accessor)
-    (ecase (getf (cddar accessor) :visibility :public)
+    (ecase (getf (accessor-descriptor-plist accessor) :visibility :public)
       (:public :public)
       (:private :private)))
+
+  (defun accessor-declarations (accessor)
+    (getf (accessor-descriptor-plist accessor) :declarations))
 
   (defun accessor-body (accessor)
     (cdr accessor)))

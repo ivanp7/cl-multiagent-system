@@ -13,6 +13,7 @@
     (mapcar (lambda (accessor)
               `(,(accessor-full-name accessor)
                  (,@(accessor-full-lambda-list accessor))
+                 (declare ,@(accessor-declarations accessor))
                  (let ((self self))
                    (declare (ignorable self))
                    ,@(accessor-body accessor))))
