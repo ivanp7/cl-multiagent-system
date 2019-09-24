@@ -1,8 +1,8 @@
-;;;; accessor-description.lisp
+;;;; entity-utils.lisp
 ;;
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
-(in-package #:cl-synchronized-entity)
+(in-package #:cl-multiagent-system)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun normalize-accessor-description (accessor)

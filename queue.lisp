@@ -2,7 +2,7 @@
 ;;
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
-(in-package #:cl-synchronized-entity)
+(in-package #:cl-multiagent-system)
 
 ;;; public interface
 
@@ -59,4 +59,10 @@
         ((<= n 0) (queue-empty-value queue))
         ((= n 1) (popq))
         (t (values-list (loop :for i :below n :collect (popq))))))))
+
+(defun queue-pop-all (queue)
+  (bt:with-lock-held ((queue-lock queue))
+    (prog1 (queue-front-cons queue)
+      (setf (queue-front-cons queue) ()
+            (queue-back-cons queue) ()))))
 

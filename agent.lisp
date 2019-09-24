@@ -1,6 +1,6 @@
 ;;;; agent.lisp
 
-(in-package #:cl-synchronized-entity)
+(in-package #:cl-multiagent-system)
 
 (define-synchronized-entity agent (type-id instance-id loop-fn
                                    &key start-fn stop-fn data-plist
@@ -18,20 +18,28 @@
                                (type queue message-queue)
                                (type hash-table data)
                                (type (or null bt:thread) thread)))
+
   type-id instance-id loop-fn start-fn stop-fn running-p
   (setf loop-fn) (setf start-fn) (setf stop-fn)
+
   ((message (&key keep))
    (if keep
      (queue-front message-queue)
      (queue-pop message-queue)))
   (((setf message) (msg))
    (queue-push message-queue msg))
-  ((data (key &optional default) :reads (data))
+
+  ((datum (key &optional (default +no-value+)) :reads (data))
    (gethash key data default))
-  (((setf data) (value key) :writes (data))
+  (((setf datum) (value key) :writes (data))
    (if (no-value-p value)
      (remhash key data)
      (setf (gethash key data) value)))
+  ((read-data (fn) :reads (data))
+   (funcall fn data))
+  ((write-data (fn) :writes (data))
+   (funcall fn data))
+
   ((start () :writes (running-p) :reads (loop-fn start-fn stop-fn))
    (unless (and thread (bt:thread-alive-p thread))
      (setf thread
@@ -57,7 +65,35 @@
      (setf thread nil running-p nil)
      t)))
 
-(defmacro define-agent-data-accessor (name data-key)
+(define-synchronized-entity message (&key addresser addressee data-plist
+                                     &aux (data (alexandria:plist-hash-table
+                                                  data-plist)))
+                            (:declarations
+                              ((type (or null agent) addresser addressee)
+                               (type list data-plist)
+                               (type hash-table data)))
+
+  addresser addressee (setf addresser) (setf addressee)
+  ((swap-addresses () :writes (addresser addressee))
+   (rotatef addresser addressee)
+   t)
+
+  ((datum (key &optional (default +no-value+)) :reads (data))
+   (gethash key data default))
+  (((setf datum) (value key) :writes (data))
+   (if (no-value-p value)
+     (remhash key data)
+     (setf (gethash key data) value)))
+  ((read-data (fn) :reads (data))
+   (funcall fn data))
+  ((write-data (fn) :writes (data))
+   (funcall fn data)))
+
+(defmacro define-agent-datum-accessor (name datum-key)
   `(defmacro ,name (agent)
-     `(agent-data ,agent ,,data-key)))
+     `(,,(funcall *accessor-name-fn* 'agent 'datum) ,agent ,,datum-key)))
+
+(defmacro define-message-datum-accessor (name datum-key)
+  `(defmacro ,name (message)
+     `(,,(funcall *accessor-name-fn* 'message 'datum) ,message ,,datum-key)))
 

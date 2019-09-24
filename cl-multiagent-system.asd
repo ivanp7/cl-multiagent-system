@@ -1,8 +1,8 @@
-;;;; cl-synchronized-entity.asd
+;;;; cl-multiagent-system.asd
 ;;
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
-(asdf:defsystem #:cl-synchronized-entity
+(asdf:defsystem #:cl-multiagent-system
   :description "A more flexible kind of structures, \
 designed for multithreaded applications."
   :author "Ivan Podmazov"
@@ -13,10 +13,10 @@ designed for multithreaded applications."
   :components 
   ((:static-file "README.md")
    (:file "package")
-   (:file "accessor-utils" :depends-on ("package"))
-   (:file "accessor" :depends-on ("accessor-utils"))
-   (:file "rw-lock" :depends-on ("package"))
-   (:file "entity" :depends-on ("accessor" "rw-lock"))
+   (:file "entity-utils" :depends-on ("package"))
+   (:file "entity-accessor" :depends-on ("entity-utils"))
+   (:file "entity-lock" :depends-on ("package"))
+   (:file "entity" :depends-on ("entity-accessor" "entity-lock"))
    (:file "queue" :depends-on ("package"))
    (:file "agent" :depends-on ("entity" "queue"))))
 

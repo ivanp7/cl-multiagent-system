@@ -1,10 +1,10 @@
-;;;; rw-lock.lisp
+;;;; entity-lock.lisp
 ;;
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
 ;;; https://en.wikipedia.org/wiki/Readers-writers_problem
 
-(in-package #:cl-synchronized-entity)
+(in-package #:cl-multiagent-system)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun make-read-write-lock-vars ()

@@ -2,7 +2,7 @@
 ;;
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
-(in-package #:cl-synchronized-entity)
+(in-package #:cl-multiagent-system)
 
 (defparameter *constructor-name-fn*
   (lambda (entity-type) 
@@ -100,6 +100,7 @@
 
 (deftype synchronized-entity () '(function (symbol * &rest *) *))
 
+(deftype missing-value () 'symbol)
 (alexandria:define-constant +no-value+ '#.(gensym "NO-VALUE") 
                             :test (constantly t))
 

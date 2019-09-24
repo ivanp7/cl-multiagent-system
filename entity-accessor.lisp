@@ -1,8 +1,8 @@
-;;;; define-accessor.lisp
+;;;; entity-accessor.lisp
 ;;
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
-(in-package #:cl-synchronized-entity)
+(in-package #:cl-multiagent-system)
 
 (defparameter *accessor-name-fn*
   (lambda (entity-type resource) 

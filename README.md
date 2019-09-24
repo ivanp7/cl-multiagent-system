@@ -1,13 +1,12 @@
-# cl-synchronized-entity
+# cl-multiagent-system
 
-*cl-synchronized-entity* is a more flexible kind of structures, 
-designed for multithreaded applications.
+*cl-multiagent-system* is a multithreaded model of an multiagent system.
 
 ## Usage                                                           
 
 ### Entity
 
-An entity is defined with the macro         
+A synchronized entity is defined with the macro         
 
 ```lisp                                                            
 (define-synchronized-entity entity-type lambda-list
@@ -52,6 +51,7 @@ accessor-lambda-list ::= (new-value-var {ordinary-lambda-list})
 
 accessor-settings ::= [:writes ({name}*)] [:reads ({name}*)] 
                       [:visibility {:public | :private}]
+                      [:declarations ({declaration}*)]
 ```
 
 The full form allows to specify custom accessor name, additional parameters,
@@ -63,6 +63,8 @@ accessors can run in parallel, and which cannot.
 
 From within an entity, all accessors are available as local functions 
 (defined using `labels`), regardless to their visibility.
+
+Accessor's `:declarations` are applied to a corresponding local function.
 
 The macro defines:
 
@@ -78,16 +80,28 @@ The macro defines:
 Initialization and accessors body code can use `self` binding, which is
 assigned to the entity instance itself.
 
-### Agent
+### Agent and message
 
-The library includes an agent facility to help develop multiagent systems.
-The code in `agent.lisp` is self-documentary and could be considered as an
-example of use of `define-synchronized-entity`.
+The library includes an `agent` and `message` facilities to help develop 
+multiagent system models. An agent wraps a thread object and contains
+associated action functions and data.  Agents can be started, stopped 
+and killed, can receive/send messages from/to other agents.
+
+The code in `agent.lisp` is self-documentary.  The interested reader 
+is invited to get acquainted with the implementation themselves.
 
 ### Synchronized queue
 
-As a bonus, the library provides public interface to synchronized queues
-(see `queue.lisp` for details).
+As a bonus, the library provides public interface to synchronized queues.  
+A queue are protected with a mutex. 
+
+List of supported operations (see `queue.lisp` for details):
+
+* testing for emptiness;
+
+* accessing first and last elements;
+
+* pushing and popping multiple elements.
 
 ## Author                                                          
 
