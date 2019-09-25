@@ -15,7 +15,7 @@
            :agent-start-fn :agent-stop-fn :agent-running-p 
            :agent-message :agent-datum :agent-read-data :agent-write-data
            :agent-start :agent-stop :agent-kill 
-           :define-agent-datum-accessor :agent-route-fn :agent-forward-message
+           :define-agent-datum-accessor
            :message :make-message 
            :message-addresser :message-addressee :message-swap-addresses 
            :message-datum :message-read-data :message-write-data 

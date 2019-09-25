@@ -3,7 +3,7 @@
 (in-package #:cl-multiagent-system)
 
 (define-synchronized-entity agent (type-id instance-id loop-fn
-                                   &key start-fn stop-fn data-plist
+                                   &key start-fn stop-fn route-fn data-plist
                                    &aux running-p 
                                    (message-queue (make-queue 
                                                     :empty-value +no-value+))
@@ -12,22 +12,27 @@
                             (:declarations 
                               ((type (function (agent) *) loop-fn)
                                (type (or null (function (agent) *)) 
-                                     start-fn stop-fn)
+                                     start-fn stop-fn route-fn)
                                (type list data-plist)
                                (type boolean running-p)
                                (type queue message-queue)
                                (type hash-table data)
                                (type (or null bt:thread) thread)))
 
-  type-id instance-id loop-fn start-fn stop-fn running-p
-  (setf loop-fn) (setf start-fn) (setf stop-fn)
+  type-id instance-id loop-fn start-fn stop-fn route-fn running-p
+  (setf loop-fn) (setf start-fn) (setf stop-fn) (setf route-fn)
 
+  (((setf message) (msg))
+   (queue-push message-queue msg))
   ((message (&key keep))
    (if keep
      (queue-front message-queue)
      (queue-pop message-queue)))
-  (((setf message) (msg))
-   (queue-push message-queue msg))
+  ((forward-message (msg) :reads (route-fn))
+   (when route-fn
+     (alexandria:when-let* ((forward-to (funcall route-fn self msg)))
+       (setf (agent-message forward-to) msg)
+       forward-to)))
 
   ((datum (key &optional (default +no-value+)) :reads (data))
    (gethash key data default))
@@ -71,16 +76,6 @@
   `(defmacro ,name (agent)
      `(,,`',(funcall *accessor-name-fn* 'agent 'datum) 
         ,agent ,,datum-key ,,@(when def-p `(,default)))))
-
-;;;----------------------------------------------------------------------------
-
-(define-agent-datum-accessor agent-route-fn :route-fn nil)
-
-(defmacro agent-forward-message (agent message)
-  (alexandria:once-only (agent message)
-    `(alexandria:when-let* ((route-fn (agent-route-fn ,agent)) 
-                            (next (funcall route-fn ,agent ,message)))
-       (setf (agent-message next) ,message))))
 
 ;;;----------------------------------------------------------------------------
 
