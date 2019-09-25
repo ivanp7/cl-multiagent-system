@@ -31,7 +31,8 @@
 
   ((datum (key &optional (default +no-value+)) :reads (data))
    (gethash key data default))
-  (((setf datum) (value key) :writes (data))
+  (((setf datum) (value key &optional default) :writes (data)
+                 :declarations ((ignore default)))
    (if (no-value-p value)
      (remhash key data)
      (setf (gethash key data) value)))
@@ -45,14 +46,14 @@
      (setf thread
            (bt:make-thread
              (lambda ()
-               (alexandria:if-let ((start-fn (agent-start-fn self)))
+               (alexandria:when-let ((start-fn (agent-start-fn self)))
                  (funcall start-fn self))
                (loop
                  (if (agent-running-p self)
                    (funcall (agent-loop-fn self) self)
                    (return))
                  (bt:thread-yield))
-               (alexandria:if-let ((stop-fn (agent-stop-fn self)))
+               (alexandria:when-let ((stop-fn (agent-stop-fn self)))
                  (funcall stop-fn self)))) 
            running-p t)))
   ((stop () :writes (running-p))
@@ -64,6 +65,24 @@
      (bt:destroy-thread thread)
      (setf thread nil running-p nil)
      t)))
+
+(defmacro define-agent-datum-accessor (name datum-key 
+                                       &optional (default '+no-value+ def-p))
+  `(defmacro ,name (agent)
+     `(,,`',(funcall *accessor-name-fn* 'agent 'datum) 
+        ,agent ,,datum-key ,,@(when def-p `(,default)))))
+
+;;;----------------------------------------------------------------------------
+
+(define-agent-datum-accessor agent-route-fn :route-fn nil)
+
+(defmacro agent-forward-message (agent message)
+  (alexandria:once-only (agent message)
+    `(alexandria:when-let* ((route-fn (agent-route-fn ,agent)) 
+                            (next (funcall route-fn ,agent ,message)))
+       (setf (agent-message next) ,message))))
+
+;;;----------------------------------------------------------------------------
 
 (define-synchronized-entity message (&key addresser addressee data-plist
                                      &aux (data (alexandria:plist-hash-table
@@ -80,7 +99,8 @@
 
   ((datum (key &optional (default +no-value+)) :reads (data))
    (gethash key data default))
-  (((setf datum) (value key) :writes (data))
+  (((setf datum) (value key &optional default) :writes (data)
+                 :declarations ((ignore default)))
    (if (no-value-p value)
      (remhash key data)
      (setf (gethash key data) value)))
@@ -89,11 +109,9 @@
   ((write-data (fn) :writes (data))
    (funcall fn data)))
 
-(defmacro define-agent-datum-accessor (name datum-key)
-  `(defmacro ,name (agent)
-     `(,,(funcall *accessor-name-fn* 'agent 'datum) ,agent ,,datum-key)))
-
-(defmacro define-message-datum-accessor (name datum-key)
+(defmacro define-message-datum-accessor (name datum-key 
+                                         &optional (default '+no-value+ def-p))
   `(defmacro ,name (message)
-     `(,,(funcall *accessor-name-fn* 'message 'datum) ,message ,,datum-key)))
+     `(,,`',(funcall *accessor-name-fn* 'message 'datum) 
+        ,message ,,datum-key ,,@(when def-p `(,default)))))
 

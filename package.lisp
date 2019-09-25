@@ -14,9 +14,10 @@
            :agent :make-agent :agent-type-id :agent-instance-id :agent-loop-fn
            :agent-start-fn :agent-stop-fn :agent-running-p 
            :agent-message :agent-datum :agent-read-data :agent-write-data
-           :agent-start :agent-stop :agent-kill
+           :agent-start :agent-stop :agent-kill 
+           :define-agent-datum-accessor :agent-route-fn :agent-forward-message
            :message :make-message 
            :message-addresser :message-addressee :message-swap-addresses 
-           :message-datum :message-read-data :message-write-data
-           :define-agent-datum-accessor :define-message-datum-accessor))
+           :message-datum :message-read-data :message-write-data 
+           :define-message-datum-accessor))
 
