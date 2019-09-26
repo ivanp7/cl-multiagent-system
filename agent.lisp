@@ -2,24 +2,45 @@
 
 (in-package #:cl-multiagent-system)
 
+(define-synchronized-entity table (&rest data-plist
+                                   &aux (data (alexandria:plist-hash-table
+                                                data-plist)))
+                            (:declarations
+                              ((type list data-plist) (type hash-table data)))
+
+  ((datum (key &optional (default +no-value+)) :reads (data))
+   (gethash key data default))
+  (((setf datum) (value key &optional default) :writes (data)
+                 :declarations ((ignore default)))
+   (if (no-value-p value)
+     (remhash key data)
+     (setf (gethash key data) value)))
+  ((read-data (fn) :reads (data))
+   (funcall fn data))
+  ((write-data (fn) :writes (data))
+   (funcall fn data)))
+
+;;;----------------------------------------------------------------------------
+
 (define-synchronized-entity agent (type-id instance-id loop-fn
                                    &key start-fn stop-fn route-fn data-plist
-                                   &aux running-p 
+                                   &aux running-p thread
                                    (message-queue (make-queue 
-                                                    :empty-value +no-value+))
-                                   (data (alexandria:plist-hash-table 
-                                           data-plist)) thread)
+                                                    :empty-value +no-value+)) 
+                                   (table (apply #'make-table data-plist)))
                             (:declarations 
                               ((type (function (agent) *) loop-fn)
                                (type (or null (function (agent) *)) 
-                                     start-fn stop-fn route-fn)
+                                     start-fn stop-fn)
+                               (type (or null (function (agent *) agent))
+                                     route-fn)
                                (type list data-plist)
                                (type boolean running-p)
+                               (type (or null bt:thread) thread)
                                (type queue message-queue)
-                               (type hash-table data)
-                               (type (or null bt:thread) thread)))
+                               (type table table)))
 
-  type-id instance-id loop-fn start-fn stop-fn route-fn running-p
+  type-id instance-id loop-fn start-fn stop-fn route-fn running-p table
   (setf loop-fn) (setf start-fn) (setf stop-fn) (setf route-fn)
 
   (((setf message) (msg))
@@ -33,18 +54,6 @@
      (alexandria:when-let* ((forward-to (funcall route-fn self msg)))
        (setf (agent-message forward-to) msg)
        forward-to)))
-
-  ((datum (key &optional (default +no-value+)) :reads (data))
-   (gethash key data default))
-  (((setf datum) (value key &optional default) :writes (data)
-                 :declarations ((ignore default)))
-   (if (no-value-p value)
-     (remhash key data)
-     (setf (gethash key data) value)))
-  ((read-data (fn) :reads (data))
-   (funcall fn data))
-  ((write-data (fn) :writes (data))
-   (funcall fn data))
 
   ((start () :writes (running-p) :reads (loop-fn start-fn stop-fn))
    (unless (and thread (bt:thread-alive-p thread))
@@ -74,39 +83,7 @@
 (defmacro define-agent-datum-accessor (name datum-key 
                                        &optional (default '+no-value+ def-p))
   `(defmacro ,name (agent)
-     `(,,`',(funcall *accessor-name-fn* 'agent 'datum) 
-        ,agent ,,datum-key ,,@(when def-p `(,default)))))
-
-;;;----------------------------------------------------------------------------
-
-(define-synchronized-entity message (&key addresser addressee data-plist
-                                     &aux (data (alexandria:plist-hash-table
-                                                  data-plist)))
-                            (:declarations
-                              ((type (or null agent) addresser addressee)
-                               (type list data-plist)
-                               (type hash-table data)))
-
-  addresser addressee (setf addresser) (setf addressee)
-  ((swap-addresses () :writes (addresser addressee))
-   (rotatef addresser addressee)
-   t)
-
-  ((datum (key &optional (default +no-value+)) :reads (data))
-   (gethash key data default))
-  (((setf datum) (value key &optional default) :writes (data)
-                 :declarations ((ignore default)))
-   (if (no-value-p value)
-     (remhash key data)
-     (setf (gethash key data) value)))
-  ((read-data (fn) :reads (data))
-   (funcall fn data))
-  ((write-data (fn) :writes (data))
-   (funcall fn data)))
-
-(defmacro define-message-datum-accessor (name datum-key 
-                                         &optional (default '+no-value+ def-p))
-  `(defmacro ,name (message)
-     `(,,`',(funcall *accessor-name-fn* 'message 'datum) 
-        ,message ,,datum-key ,,@(when def-p `(,default)))))
+     `(,,`',(funcall *accessor-name-fn* 'table 'datum)
+        (,,`',(funcall *accessor-name-fn* 'agent 'table) ,agent)
+         ,,datum-key ,,@(when def-p `(,default)))))
 

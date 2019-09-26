@@ -4,7 +4,7 @@
 
 ## Usage                                                           
 
-### Entity
+### Entities
 
 A synchronized entity is defined with the macro         
 
@@ -80,9 +80,9 @@ The macro defines:
 Initialization and accessors body code can use `self` binding, which is
 assigned to the entity instance itself.
 
-### Agent and message
+### Agents
 
-The library includes an `agent` and `message` facilities to help develop 
+The library includes an `agent` and `table` facilities to help develop 
 multiagent system models. An agent wraps a thread object and contains
 associated action functions and data.  Agents can be started, stopped 
 and killed, can receive/send messages from/to other agents.
@@ -90,7 +90,7 @@ and killed, can receive/send messages from/to other agents.
 The code in `agent.lisp` is self-documentary.  The interested reader 
 is invited to get acquainted with the implementation themselves.
 
-### Synchronized queue
+### Synchronized queues
 
 As a bonus, the library provides public interface to synchronized queues.  
 A queue are protected with a mutex. 
