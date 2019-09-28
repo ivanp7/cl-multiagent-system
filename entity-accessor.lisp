@@ -8,6 +8,9 @@
   (lambda (entity-type resource) 
     (alexandria:symbolicate entity-type "-" resource)))
 
+(defmacro make-accessor-name (entity-type resource)
+  `(funcall *accessor-name-fn* ,entity-type ,resource))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun lambda-list-parameters (requiredp optionalp restp keyp)
     (append requiredp 
@@ -46,7 +49,7 @@
       (let ((parameters (lambda-list-parameters 
                           requiredp optionalp restp keyp))
             (args (gensym)))
-        `(defmacro ,(funcall *accessor-name-fn* entity-type key) 
+        `(defmacro ,(make-accessor-name entity-type key) 
            (,entity-type ,@lambda-list)
            (alexandria:once-only (,entity-type ,@parameters)
              (declare (ignorable ,@parameters))
@@ -61,7 +64,7 @@
     (let ((parameters (lambda-list-parameters 
                         requiredp optionalp restp keyp))
           (args (gensym)) (store-var (gensym)))
-      `(defsetf ,(funcall *accessor-name-fn* entity-type key) 
+      `(defsetf ,(make-accessor-name entity-type key) 
            (,entity-type ,@lambda-list) (,store-var)
          (declare (ignorable ,@parameters))
          (let (,args)

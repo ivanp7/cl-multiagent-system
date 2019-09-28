@@ -6,15 +6,20 @@
   (:use #:cl)
   (:nicknames #:mas #:cl-mas)
   (:export :*accessor-name-fn* :*constructor-name-fn* 
-           :define-synchronized-entity :self 
            :missing-value :+no-value+ :no-value-p
+           :synchronized-entity :define-synchronized-entity :self 
+           :append-aux-to-lambda-list
+
            :*default-queue-empty-value* :queue :queue-empty-value
            :queue-empty-p :queue-front :queue-back 
            :queue-push :queue-pop :queue-pop-all
-           :table :make-table :table-datum :table-read-data :table-write-data
-           :agent :make-agent :agent-type-id :agent-instance-id :agent-loop-fn
-           :agent-start-fn :agent-stop-fn :agent-running-p :agent-table
-           :agent-message :agent-forward-message
-           :agent-start :agent-stop :agent-kill 
-           :define-agent-datum-accessor))
+
+           :define-agent :running-p :start :stop :kill
+           :htable :make-htable :htable-datum 
+           :htable-read-data :htable-write-data
+           :dagent :make-dagent :dagent-type-id :dagent-instance-id 
+           :dagent-loop-fn :dagent-start-fn :dagent-stop-fn :dagent-route-fn
+           :dagent-data :dagent-message :dagent-forward-message 
+           :dagent-running-p :dagent-start :dagent-stop :dagent-kill 
+           :define-dagent-datum-accessor :dagent-read-data :dagent-write-data))
 

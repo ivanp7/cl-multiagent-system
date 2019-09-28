@@ -82,8 +82,9 @@ assigned to the entity instance itself.
 
 ### Agents
 
-The library includes an `agent` and `table` facilities to help develop 
-multiagent system models. An agent wraps a thread object and contains
+The library includes `define-agent` macro and ready `dagent` (dynamic agent) 
+facility to help develop multiagent system models. 
+An agent wraps a thread object and contains
 associated action functions and data.  Agents can be started, stopped 
 and killed, can receive/send messages from/to other agents.
 

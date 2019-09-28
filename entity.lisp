@@ -8,6 +8,9 @@
   (lambda (entity-type) 
     (alexandria:symbolicate "MAKE-" entity-type)))
 
+(defmacro make-constructor-name (entity-type)
+  `(funcall *constructor-name-fn* ,entity-type))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun labels-declarations (accessors)
     (mapcar (lambda (accessor)
@@ -72,7 +75,7 @@
                      (lambda (accessor) 
                        (eq (accessor-type accessor) :setter)) accessors)))
       (alexandria:with-gensyms (key value args)
-        `(defun ,(funcall *constructor-name-fn* entity-type) (,@lambda-list)
+        `(defun ,(make-constructor-name entity-type) (,@lambda-list)
            (declare ,@declarations)
            (let (self)
              (labels (,@(labels-declarations accessors))
@@ -122,4 +125,12 @@
                accessors)
      ,(define-constructor entity-type lambda-list declarations initialization 
                           accessors)))
+
+;;;----------------------------------------------------------------------------
+
+(defun append-aux-to-lambda-list (lambda-list &rest specifiers)
+  (append lambda-list 
+          (unless (member '&aux lambda-list :test #'eq)
+            `(&aux))
+          specifiers))
 
