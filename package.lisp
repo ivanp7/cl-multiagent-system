@@ -21,5 +21,6 @@
            :dagent-loop-fn :dagent-start-fn :dagent-stop-fn :dagent-route-fn
            :dagent-data :dagent-message :dagent-forward-message 
            :dagent-running-p :dagent-start :dagent-stop :dagent-kill 
-           :define-dagent-datum-accessor :dagent-read-data :dagent-write-data))
+           :dagent-datum :define-dagent-datum-accessor 
+           :dagent-read-data :dagent-write-data))
 

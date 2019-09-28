@@ -102,11 +102,13 @@
        (setf (dagent-message forward-to) msg)
        forward-to))))
 
-(defmacro define-dagent-datum-accessor (name datum-key &optional 
-                                               (default '+no-value+ def-p))
+(defmacro dagent-datum (agent key &optional (default '+no-value def-p))
+  `(htable-datum (dagent-data ,agent) ,key ,@(when def-p `(,default))))
+
+(defmacro define-dagent-datum-accessor (name key &optional 
+                                                 (default '+no-value+ def-p))
   `(defmacro ,name (agent)
-     `(htable-datum (dagent-data ,agent)
-                    ,,datum-key ,,@(when def-p `(,default)))))
+     `(dagent-datum ,agent ,,key ,,@(when def-p `(,default)))))
 
 (defmacro dagent-read-data (agent fn)
   `(htable-read-data (dagent-data ,agent) ,fn))
