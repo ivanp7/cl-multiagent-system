@@ -86,13 +86,11 @@
   
   type-id instance-id loop-fn start-fn stop-fn route-fn
   (setf loop-fn) (setf start-fn) (setf stop-fn) (setf route-fn)
+  data
 
-  ((data ()) ; no read-write lock
-   data)
-
-  (((setf message) (msg)) ; no read-write lock
+  (((setf message) (msg)) ; no read-write lock, as queue is synchronized
    (queue-push message-queue msg))
-  ((message (&key keep)) ; no read-write lock
+  ((message (&key keep))  ; no read-write lock, as queue is synchronized
    (if keep
      (queue-front message-queue)
      (queue-pop message-queue)))
