@@ -57,21 +57,28 @@
 
   (defun accessor-written-resources (accessor)
     (getf (accessor-descriptor-plist accessor) :writes))
-
-  (defun (setf accessor-write-locks) (list accessor)
-    (setf (getf (accessor-descriptor-plist accessor) :writes) list))
-
-  (defun accessor-write-locks (accessor)
-    (getf (accessor-descriptor-plist accessor) :writes))
+  (defun (setf accessor-written-resources) (value accessor)
+    (setf (getf (accessor-descriptor-plist accessor) :writes) value))
 
   (defun accessor-read-resources (accessor)
     (getf (accessor-descriptor-plist accessor) :reads))
+  (defun (setf accessor-read-resources) (value accessor)
+    (setf (getf (accessor-descriptor-plist accessor) :reads) value))
 
-  (defun (setf accessor-read-locks) (list accessor)
-    (setf (getf (accessor-descriptor-plist accessor) :reads) list))
+  (defun accessor-write-locks (accessor)
+    (getf (accessor-descriptor-plist accessor) :writes))
+  (defun (setf accessor-write-locks) (value accessor)
+    (setf (getf (accessor-descriptor-plist accessor) :writes) value))
 
   (defun accessor-read-locks (accessor)
     (getf (accessor-descriptor-plist accessor) :reads))
+  (defun (setf accessor-read-locks) (value accessor)
+    (setf (getf (accessor-descriptor-plist accessor) :reads) value))
+
+  (defun accessor-called-accessors (accessor)
+    (getf (accessor-descriptor-plist accessor) :calls))
+  (defun (setf accessor-called-accessors) (value accessor)
+    (setf (getf (accessor-descriptor-plist accessor) :calls) value))
 
   (defun accessor-visibility (accessor)
     (ecase (getf (accessor-descriptor-plist accessor) :visibility :public)

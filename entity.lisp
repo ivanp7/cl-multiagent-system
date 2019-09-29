@@ -12,15 +12,36 @@
   `(funcall *constructor-name-fn* ,entity-type))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun labels-declarations (accessors)
-    (mapcar (lambda (accessor)
-              `(,(accessor-full-name accessor)
-                 (,@(accessor-full-lambda-list accessor))
-                 (declare ,@(accessor-declarations accessor))
-                 (let ((self self))
-                   (declare (ignorable self))
-                   ,@(accessor-body accessor))))
-            accessors))
+  (defun determine-all-used-resources (accessors)
+    (macrolet ((rlist-of (rw) `(car ,rw))
+               (wlist-of (rw) `(cdr ,rw)))
+      (labels ((process (accessor rw-list visited-list)
+                 (unless (find (accessor-full-name accessor) visited-list
+                               :test #'equal)
+                   (push (accessor-full-name accessor) visited-list)
+                   (setf (wlist-of rw-list)
+                         (union (wlist-of rw-list)
+                                (accessor-written-resources accessor)
+                                :test #'equal)
+                         (rlist-of rw-list)
+                         (union (rlist-of rw-list)
+                                (accessor-read-resources accessor)
+                                :test #'equal))
+                   (dolist (callee (accessor-called-accessors accessor))
+                     (alexandria:if-let 
+                         ((called-accessor (find callee accessors
+                                                 :key #'accessor-full-name
+                                                 :test #'equal)))
+                       (process called-accessor rw-list visited-list)
+                       (error "No such accessor ~A declared as called."
+                              callee))))))
+        (dolist (accessor accessors)
+          (let ((rw-list (cons () ())))
+            (process accessor rw-list ())
+            (setf (accessor-written-resources accessor) (wlist-of rw-list)
+                  (accessor-read-resources accessor) (rlist-of rw-list)
+                  (accessor-called-accessors accessor) ())))))
+    accessors)
 
   (defun replace-resources-with-locks (accessors)
     (let* ((written-resources-lists 
@@ -58,6 +79,16 @@
                 (accessor-read-locks accessor) read-locks)))
       (alexandria:hash-table-values rw-locks-map)))
 
+  (defun labels-declarations (accessors)
+    (mapcar (lambda (accessor)
+              `(,(accessor-full-name accessor)
+                (,@(accessor-full-lambda-list accessor))
+                (declare ,@(accessor-declarations accessor))
+                (let ((self self))
+                  (declare (ignorable self))
+                  ,@(accessor-body accessor))))
+            accessors))
+
   (defun construct-case (accessor args)
     (let ((key (alexandria:make-keyword (accessor-name accessor)))) 
       `(,key
@@ -67,6 +98,7 @@
 
   (defun define-constructor (entity-type lambda-list declarations
                              initialization accessors)
+    (determine-all-used-resources accessors)
     (let ((rw-locks-vars (replace-resources-with-locks accessors))
           (getters (remove-if-not 
                      (lambda (accessor) 
