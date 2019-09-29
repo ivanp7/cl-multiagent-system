@@ -50,6 +50,7 @@ accessor-name ::= (setf symbol)
 accessor-lambda-list ::= (new-value-var {ordinary-lambda-list})
 
 accessor-settings ::= [:writes ({name}*)] [:reads ({name}*)] 
+                      [:calls ({accessor-name}*)]
                       [:visibility {:public | :private}]
                       [:declarations ({declaration}*)]
 ```
@@ -60,6 +61,14 @@ used resources for the synchronization mechanism.
 
 `:reads` and `:writes` lists help the implementation to determine which
 accessors can run in parallel, and which cannot.
+
+`:calls` list specifies which other accessors are used in this accessor body, 
+to automatically extend the `:reads` and `:writes` lists.
+
+`:visibility :public` declaration generates a macro for convenient
+outside access to the accessor (the default behavior). 
+`:visibility :private` accessors are considered private interface and don't
+have macros to be used outside.
 
 From within an entity, all accessors are available as local functions 
 (defined using `labels`), regardless to their visibility.
