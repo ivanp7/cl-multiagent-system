@@ -5,31 +5,35 @@
 (defmacro define-agent (agent-type lambda-list 
                         (&key declarations initialization body)
                         &rest accessors)
-  (alexandria:with-gensyms (running-p thread)
-    `(define-synchronized-entity ,agent-type ,(append-aux-to-lambda-list 
-                                                lambda-list running-p thread)
-         (:declarations (,@declarations 
-                         (type boolean ,running-p) 
-                         (type (or null bt:thread) ,thread))
-          :initialization (,@initialization))
-
-       ,@accessors
-
-       ((running-p () :reads (,running-p))
-        ,running-p)
-       ((start () :writes (,running-p))
-        (unless (and ,thread (bt:thread-alive-p ,thread))
-          (setf ,thread (bt:make-thread (lambda () ,@body)) 
-                ,running-p t)))
-       ((stop () :writes (,running-p))
-        (when ,running-p
-          (setf ,running-p nil)
-          t))
-       ((kill () :writes (,running-p))
-        (when (and ,thread (bt:thread-alive-p ,thread))
-          (bt:destroy-thread ,thread)
-          (setf ,thread nil ,running-p nil)
-          t)))))
+  (alexandria:with-gensyms (thread-fn running-p thread)
+    `(let ((,thread-fn (lambda (self) 
+                         (declare (ignorable self))
+                         ,@body)))
+       (define-synchronized-entity ,agent-type ,(append-aux-to-lambda-list 
+                                                  lambda-list running-p thread)
+           (:declarations (,@declarations 
+                           (type boolean ,running-p) 
+                           (type (or null bt:thread) ,thread))
+            :initialization (,@initialization))
+  
+         ,@accessors
+  
+         ((running-p () :reads (,running-p))
+          ,running-p)
+         ((start () :writes (,running-p))
+          (unless (and ,thread (bt:thread-alive-p ,thread))
+            (setf ,thread (bt:make-thread 
+                            (lambda () (funcall ,thread-fn self))) 
+                  ,running-p t)))
+         ((stop () :writes (,running-p))
+          (when ,running-p
+            (setf ,running-p nil)
+            t))
+         ((kill () :writes (,running-p))
+          (when (and ,thread (bt:thread-alive-p ,thread))
+            (bt:destroy-thread ,thread)
+            (setf ,thread nil ,running-p nil)
+            t))))))
 
 ;;;----------------------------------------------------------------------------
 
