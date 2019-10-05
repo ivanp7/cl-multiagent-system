@@ -107,6 +107,8 @@
              (unless running-p
                (return)))))))
 
+  ((number-of-agents () :read (agent-threads))
+   (hash-table-count agent-threads))
   ((map-agents (fn) :read (agent-threads))
    (alexandria:maphash-keys fn agent-threads))
 

@@ -116,8 +116,12 @@ respectively) will be generated automatically.
 
 A multiagent thread is a native thread designed to run multiple agents
 using green threads. It is created with function `make-multiagent-thread`,
-which takes no arguments. The only method of it is
-`(multiagent-thread-map-agents fn)`, which map provided function over
+which takes no arguments. The only methods of it are:
+
+* `(multiagent-thread-number-of-agents thread)` -- number of currently running
+agents;
+
+* `(multiagent-thread-map-agents thread fn)` -- map provided function over
 all currently running agents.
 
 ### Agent
