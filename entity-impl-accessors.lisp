@@ -1,4 +1,4 @@
-;;;; entity-accessor.lisp
+;;;; entity-impl-accessors.lisp
 ;;
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
@@ -43,7 +43,7 @@
                           (push ,key-value ,args)))))
         (setf ,args (nconc (list ,@requiredp) (nreverse ,args))))))
 
-  (defun define-getter (entity-type key lambda-list)
+  (defun getter-definition (entity-type key lambda-list)
     (multiple-value-bind (requiredp optionalp restp keyp)
       (alexandria:parse-ordinary-lambda-list lambda-list)
       (let ((parameters (lambda-list-parameters 
@@ -58,7 +58,7 @@
                    args requiredp optionalp restp keyp)
                `(funcall ,,`,entity-type ,,key +no-value+ ,@,`,args)))))))
 
-(defun define-setter (entity-type key lambda-list)
+(defun setter-definition (entity-type key lambda-list)
   (multiple-value-bind (requiredp optionalp restp keyp)
     (alexandria:parse-ordinary-lambda-list lambda-list)
     (let ((parameters (lambda-list-parameters 
@@ -72,11 +72,16 @@
                args requiredp optionalp restp keyp)
            `(funcall ,,`,entity-type ,,key ,,`,store-var ,@,`,args))))))
 
-(defun define-accessor (entity-type accessor)
+(defun accessor-definition (entity-type accessor)
   (when (eq (accessor-visibility accessor) :public)
     (let ((key (alexandria:make-keyword (accessor-name accessor)))
           (lambda-list (accessor-lambda-list accessor))) 
       (case (accessor-type accessor)
-        (:getter (define-getter entity-type key lambda-list))
-        (:setter (define-setter entity-type key lambda-list)))))))
+        (:getter (getter-definition entity-type key lambda-list))
+        (:setter (setter-definition entity-type key lambda-list)))))))
+
+(defun accessors-definitions (entity-type accessors)
+  (mapcar (lambda (accessor)
+            (accessor-definition entity-type accessor))
+          accessors))
 

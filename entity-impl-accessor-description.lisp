@@ -1,11 +1,11 @@
-;;;; entity-utils.lisp
+;;;; entity-impl-accessor-description.lisp
 ;;
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
 (in-package #:cl-multiagent-system)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun normalize-accessor-description (accessor)
+  (defun normalize-accessor (accessor)
     (cond
       ((symbolp accessor)
        `((,accessor () :reads (,accessor))
@@ -15,6 +15,14 @@
        `((,accessor (value) :writes (,(cadr accessor)))
          (setf ,(cadr accessor) value)))
       (t accessor)))
+
+  (defun prepare-accessors (entity-type accessors)
+    (setf accessors (mapcar #'normalize-accessor accessors))
+    (if (= (length accessors) 
+           (length (remove-duplicates accessors :test #'equal 
+                                      :key #'accessor-full-name)))
+      accessors
+      (error "Accessor name collision detected in entity ~A." entity-type)))
 
   (defun accessor-full-name (accessor)
     (caar accessor))

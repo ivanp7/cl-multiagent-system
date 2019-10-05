@@ -2,119 +2,136 @@
 
 (in-package #:cl-multiagent-system)
 
-(defmacro define-agent (agent-type lambda-list 
-                        (&key declarations initialization body)
-                        &rest accessors)
-  (alexandria:with-gensyms (thread-fn running-p thread)
-    `(let ((,thread-fn (lambda (self) 
-                         (declare (ignorable self))
-                         ,@body)))
-       (define-synchronized-entity ,agent-type ,(append-aux-to-lambda-list 
-                                                  lambda-list running-p thread)
-           (:declarations (,@declarations 
-                           (type boolean ,running-p) 
-                           (type (or null bt:thread) ,thread))
-            :initialization (,@initialization))
-  
-         ,@accessors
-  
-         ((running-p () :reads (,running-p))
-          ,running-p)
-         ((start () :writes (,running-p))
-          (unless (and ,thread (bt:thread-alive-p ,thread))
-            (setf ,thread (bt:make-thread 
-                            (lambda () (funcall ,thread-fn self))) 
-                  ,running-p t)))
-         ((stop () :writes (,running-p))
-          (when ,running-p
-            (setf ,running-p nil)
-            t))
-         ((kill () :writes (,running-p))
-          (when (and ,thread (bt:thread-alive-p ,thread))
-            (bt:destroy-thread ,thread)
-            (setf ,thread nil ,running-p nil)
-            t))))))
+(define-entity data-table 
+    (&rest data-plist &aux (table (alexandria:plist-hash-table data-plist)))
+    (:declarations ((type list data-plist) (type hash-table table)))
 
-;;;----------------------------------------------------------------------------
-
-(define-synchronized-entity htable 
-    (&rest data-plist &aux (data (alexandria:plist-hash-table data-plist)))
-    (:declarations ((type list data-plist) (type hash-table data)))
-
-  ((datum (key &optional (default +no-value+)) :reads (data))
-   (gethash key data default))
-  (((setf datum) (value key &optional default) :writes (data)
+  ((field (key &optional (default +no-value+)) :reads (table))
+   (gethash key table default))
+  (((setf field) (value key &optional default) :writes (table)
                  :declarations ((ignore default)))
    (if (no-value-p value)
-     (remhash key data)
-     (setf (gethash key data) value)))
-  ((read-data (fn) :reads (data))
-   (funcall fn data))
-  ((write-data (fn) :writes (data))
-   (funcall fn data)))
+     (remhash key table)
+     (setf (gethash key table) value)))
 
-(defparameter *agent-loop-fn-ctor* (constantly nil))
-(defparameter *agent-start-fn-ctor* (constantly nil))
-(defparameter *agent-stop-fn-ctor* (constantly nil))
-(defparameter *agent-route-fn-ctor* (constantly nil))
-(defparameter *agent-data-plist-ctor* (constantly ()))
+  ((read-fields (fn) :reads (table))
+   (funcall fn table))
+  ((write-fields (fn) :writes (table))
+   (funcall fn table)))
 
-;; dynamic agent
-(define-agent dagent
-    (type-id instance-id 
-     &key (loop-fn (funcall *agent-loop-fn-ctor* type-id)) 
-          (start-fn (funcall *agent-start-fn-ctor* type-id)) 
-          (stop-fn (funcall *agent-stop-fn-ctor* type-id)) 
-          (route-fn (funcall *agent-route-fn-ctor* type-id)) 
-          (data-plist (funcall *agent-data-plist-ctor* type-id instance-id))
-     &aux (message-queue (make-queue :empty-value +no-value+))
-          (data (apply #'make-htable data-plist)))
+;;-----------------------------------------------------------------------------
 
-    (:declarations 
-      ((type (or null (function (dagent))) loop-fn start-fn stop-fn)
-       (type (or null (function (dagent *) dagent)) route-fn)
-       (type list data-plist)
-       (type queue message-queue)
-       (type htable data))
-     :body
-      ((alexandria:when-let ((start-fn (dagent-start-fn self)))
-         (funcall start-fn self))
-       (loop
-         (if (dagent-running-p self)
-           (alexandria:when-let ((loop-fn (dagent-loop-fn self)))
-             (funcall loop-fn self))
-           (return))
-         (bt:thread-yield))
-       (alexandria:when-let ((stop-fn (dagent-stop-fn self)))
-         (funcall stop-fn self))))
-  
-  type-id instance-id loop-fn start-fn stop-fn route-fn
-  (setf loop-fn) (setf start-fn) (setf stop-fn) (setf route-fn)
-  data
+(defparameter *agent-loop-fn-ctor* 
+  (constantly nil))
+(defparameter *agent-start-fn-ctor* 
+  (constantly nil))
+(defparameter *agent-stop-fn-ctor* 
+  (constantly nil))
+(defparameter *agent-data-table-ctor* 
+  (lambda (instance-id role-id)
+    (declare (ignore instance-id role-id)) 
+    (make-data-table)))
 
-  (((setf message) (msg)) ; no read-write lock, as queue is synchronized
-   (queue-push message-queue msg))
+(define-entity agent
+    (instance-id 
+     &key role-id (loop-fn (funcall *agent-loop-fn-ctor* instance-id role-id)) 
+          (start-fn (funcall *agent-start-fn-ctor* instance-id role-id)) 
+          (stop-fn (funcall *agent-stop-fn-ctor* instance-id role-id))
+          (data-table (funcall *agent-data-table-ctor* instance-id role-id))
+          host-thread
+     &aux (message-queue (make-queue :empty-value +no-value+)) running-p)
+    (:declarations
+      ((type (or null (function (agent))) loop-fn start-fn stop-fn)
+       (type boolean running-p)))
+
+  instance-id role-id loop-fn start-fn stop-fn data-table host-thread running-p
+  (setf loop-fn) (setf start-fn) (setf stop-fn) (setf data-table)
+  (((setf host-thread) (value) :writes (host-thread) :reads (running-p))
+   (if running-p
+     host-thread
+     (setf host-thread value)))
+
+  ((start () :reads (host-thread))
+   (when host-thread
+     (funcall host-thread :start-agent self)))
+  ((stop () :reads (host-thread))
+   (when host-thread
+     (funcall host-thread :stop-agent self)))
+
   ((message (&key keep))  ; no read-write lock, as queue is synchronized
    (if keep
      (queue-front message-queue)
      (queue-pop message-queue)))
-  ((forward-message (msg) :reads (route-fn))
-   (when route-fn
-     (alexandria:when-let* ((forward-to (funcall route-fn self msg)))
-       (setf (dagent-message forward-to) msg)
-       forward-to))))
+  (((setf message) (msg)) ; no read-write lock, as queue is synchronized
+   (queue-push message-queue msg))
 
-(defmacro dagent-datum (agent key &optional (default '+no-value def-p))
-  `(htable-datum (dagent-data ,agent) ,key ,@(when def-p `(,default))))
+  ;; private interface
+  (((setf running-p) (value) :writes (running-p) :visibility :private)
+   (setf running-p value)))
 
-(defmacro define-dagent-datum-accessor (name key &optional 
-                                                 (default '+no-value+ def-p))
-  `(defmacro ,name (agent)
-     `(dagent-datum ,agent ,,key ,,@(when def-p `(,default)))))
+;;-----------------------------------------------------------------------------
 
-(defmacro dagent-read-data (agent fn)
-  `(htable-read-data (dagent-data ,agent) ,fn))
+(define-thread multiagent-thread
+    (&aux (agent-threads (make-hash-table :test 'eq))
+          (start-queue (make-queue)) (stop-queue (make-queue)))
+    (:declarations
+      ((type hash-table agent-threads)
+       (type queue start-queue stop-queue))
+     :body
+      ((gt:with-green-thread
+         (loop
+           (let ((running-p (multiagent-thread-running-p self))) 
+             (if running-p
+               (dolist (agent (funcall self :get-started-agents))
+                 (funcall 
+                   self :add-thread
+                   (gt:with-green-thread
+                     (alexandria:when-let ((start-fn (agent-start-fn agent)))
+                       (funcall start-fn agent))
+                     (loop
+                       (if (agent-running-p agent)
+                         (alexandria:when-let ((loop-fn (agent-loop-fn agent)))
+                           (funcall loop-fn agent))
+                         (return))
+                       (gt:thread-yield))
+                     (alexandria:when-let ((stop-fn (agent-stop-fn agent)))
+                       (funcall stop-fn agent)))
+                   agent))
+               (multiagent-thread-map-agents
+                 self
+                 (lambda (agent)
+                   (funcall self :stop-agent agent))))
+             (gt:thread-yield)
+             (dolist (agent (funcall self :get-stopped-agents))
+               (funcall self :del-thread agent))
+             (unless running-p
+               (return)))))))
 
-(defmacro dagent-write-data (agent fn)
-  `(htable-write-data (dagent-data ,agent) ,fn))
+  ((map-agents (fn) :read (agent-threads))
+   (alexandria:maphash-keys fn agent-threads))
+
+  ;; private interface
+  (((setf start-agent) (agent) :reads (agent-threads) :visibility :private)
+   (unless (gethash agent agent-threads)
+     (funcall agent :running-p t)
+     (queue-push start-queue agent)
+     t))
+  (((setf stop-agent) (agent) :reads (agent-threads) :visibility :private)
+   (when (gethash agent agent-threads)
+     (funcall agent :running-p nil)
+     (queue-push stop-queue agent)
+     t))
+
+  ((get-started-agents () :visibility :private)
+   (queue-pop-all start-queue))
+  ((get-stopped-agents () :visibility :private)
+   (queue-pop-all stop-queue))
+
+  (((setf add-thread) (thread agent) :writes (agent-threads) 
+                      :visibility :private)
+   (unless (gethash agent agent-threads)
+     (setf (gethash agent agent-threads) thread)
+     t))
+  (((setf del-thread) (agent) :writes (agent-threads) :visibility :private)
+   (remhash agent agent-threads)))
 

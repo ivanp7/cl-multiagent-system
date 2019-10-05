@@ -8,15 +8,25 @@ designed for multithreaded applications."
   :author "Ivan Podmazov"
   :license  "MIT"
   :version "1.0.0"
-  :depends-on (#:alexandria #:bordeaux-threads)
+  :depends-on (#:alexandria #:bordeaux-threads #:green-threads)
   :serial t
   :components 
   ((:static-file "README.md")
    (:file "package")
-   (:file "entity-utils" :depends-on ("package"))
-   (:file "entity-accessor" :depends-on ("entity-utils"))
-   (:file "entity-lock" :depends-on ("package"))
-   (:file "entity" :depends-on ("entity-accessor" "entity-lock"))
+
+   (:file "entity-impl" :depends-on ("package"))
+   (:file "entity-impl-accessor-description" :depends-on ("package"))
+   (:file "entity-impl-lock" :depends-on ("package"))
+
+   (:file "entity-impl-accessors" 
+    :depends-on ("entity-impl-accessor-description"))
+   (:file "entity-impl-constructor" 
+    :depends-on ("entity-impl-accessor-description" "entity-impl-lock"))
+
+   (:file "entity" :depends-on ("entity-impl" "entity-impl-accessors"
+                                "entity-impl-constructor"))
+   (:file "thread" :depends-on ("entity-impl" "entity-impl-accessors"
+                                "entity-impl-constructor"))
    (:file "queue" :depends-on ("package"))
-   (:file "agent" :depends-on ("entity" "queue"))))
+   (:file "agent" :depends-on ("thread" "queue"))))
 

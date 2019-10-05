@@ -1,4 +1,4 @@
-;;;; entity-lock.lisp
+;;;; entity-impl-lock.lisp
 ;;
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
