@@ -3,8 +3,7 @@
 ;;;; Copyright (c) 2019 Ivan Podmazov
 
 (asdf:defsystem #:cl-multiagent-system
-  :description "A more flexible kind of structures, \
-designed for multithreaded applications."
+  :description "A multithreaded model of a multiagent system."
   :author "Ivan Podmazov"
   :license  "MIT"
   :version "1.0.0"
