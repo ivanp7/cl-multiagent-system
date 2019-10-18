@@ -107,10 +107,11 @@
              (unless running-p
                (return)))))))
 
-  ((number-of-agents () :read (agent-threads))
+  ((number-of-agents () :reads (agent-threads))
    (hash-table-count agent-threads))
-  ((map-agents (fn) :read (agent-threads))
-   (alexandria:maphash-keys fn agent-threads))
+  ((map-agents (fn) :reads (agent-threads))
+   (alexandria:maphash-keys fn agent-threads)
+   t)
 
   ;; private interface
   (((setf start-agent) (agent) :reads (agent-threads) :visibility :private)

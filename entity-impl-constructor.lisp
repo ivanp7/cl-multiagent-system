@@ -120,16 +120,20 @@
                        (lambda (,key ,value &rest ,args)
                          (declare (type symbol ,key))
                          (if (no-value-p ,value)
-                           (ecase ,key
+                           (case ,key
                              ,@(mapcar (lambda (getter) 
                                          (construct-case getter args))
-                                       getters))
+                                       getters)
+                             (otherwise (error "Unknown method ~A of ~A"
+                                               ,key ',entity-type)))
                            (progn
                              (push ,value ,args)
-                             (ecase ,key
+                             (case ,key
                                ,@(mapcar (lambda (setter) 
                                            (construct-case setter args))
-                                         setters)))))))
+                                         setters)
+                               (otherwise (error "Unknown method ~A of ~A"
+                                                 ,key ',entity-type))))))))
                ,@initialization)
              (the ,entity-type self)))))))
 

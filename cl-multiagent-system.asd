@@ -27,5 +27,7 @@
    (:file "thread" :depends-on ("entity-impl" "entity-impl-accessors"
                                 "entity-impl-constructor"))
    (:file "queue" :depends-on ("package"))
-   (:file "agent" :depends-on ("thread" "queue"))))
+   (:file "agent" :depends-on ("thread" "queue"))
+   (:file "registry" :depends-on ("package"))
+   (:file "messenger" :depends-on ("agent" "registry"))))
 

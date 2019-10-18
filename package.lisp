@@ -29,5 +29,13 @@
            :multiagent-thread :make-multiagent-thread 
            :multiagent-thread-running-p :multiagent-thread-start
            :multiagent-thread-stop :multiagent-thread-destroy
-           :multiagent-thread-map-agents))
+           :multiagent-thread-map-agents
+
+           :registry :make-registry :registry-entry-present-p :registry-entry
+           :registry-map-entries :registry-add-entry :registry-del-entry
+
+           :messenger :make-messenger :messenger-site-registry
+           :messenger-agent-registry :messenger-site-known-p 
+           :messenger-map-sites :messenger-add-site :messenger-del-site
+           :messenger-send))
 

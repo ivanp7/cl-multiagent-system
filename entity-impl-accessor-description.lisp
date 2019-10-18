@@ -5,25 +5,6 @@
 (in-package #:cl-multiagent-system)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun normalize-accessor (accessor)
-    (cond
-      ((symbolp accessor)
-       `((,accessor () :reads (,accessor))
-         ,accessor))
-      ((and (listp accessor) (eq (car accessor) 'setf) 
-            (symbolp (cadr accessor)) (null (cddr accessor)))
-       `((,accessor (value) :writes (,(cadr accessor)))
-         (setf ,(cadr accessor) value)))
-      (t accessor)))
-
-  (defun prepare-accessors (entity-type accessors)
-    (setf accessors (mapcar #'normalize-accessor accessors))
-    (if (= (length accessors) 
-           (length (remove-duplicates accessors :test #'equal 
-                                      :key #'accessor-full-name)))
-      accessors
-      (error "Accessor name collision detected in entity ~A." entity-type)))
-
   (defun accessor-full-name (accessor)
     (caar accessor))
 
@@ -96,6 +77,33 @@
   (defun accessor-declarations (accessor)
     (getf (accessor-descriptor-plist accessor) :declarations))
 
+  (defun check-accessor-descriptor-plist (accessor)
+    (loop :for key :in (accessor-descriptor-plist accessor) :by #'cddr :do 
+          (unless (member key '(:reads :writes :calls 
+                                :visibility :declarations))
+            (error "Unknown key ~A in accessor declarations." key))))
+
   (defun accessor-body (accessor)
-    (cdr accessor)))
+    (cdr accessor))
+
+  (defun normalize-accessor (accessor)
+    (let ((accessor (cond
+                      ((symbolp accessor)
+                       `((,accessor () :reads (,accessor))
+                         ,accessor))
+                      ((and (listp accessor) (eq (car accessor) 'setf) 
+                            (symbolp (cadr accessor)) (null (cddr accessor)))
+                       `((,accessor (value) :writes (,(cadr accessor)))
+                         (setf ,(cadr accessor) value)))
+                      (t accessor))))
+      (check-accessor-descriptor-plist accessor)
+      accessor))
+
+  (defun prepare-accessors (entity-type accessors)
+    (setf accessors (mapcar #'normalize-accessor accessors))
+    (if (= (length accessors) 
+           (length (remove-duplicates accessors :test #'equal 
+                                      :key #'accessor-full-name)))
+      accessors
+      (error "Accessor name collision detected in entity ~A." entity-type))))
 

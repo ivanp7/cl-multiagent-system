@@ -173,6 +173,10 @@ List of agent methods:
 
 * `(agent-stop agent)` -- stop agent execution.
 
+### Messenger
+
+TODO
+
 ### Miscellaneous
 
 #### Missing value
@@ -182,9 +186,14 @@ represents the absence of a meaningful value. This library provides such
 a constant: `+no-value+` of type `missing-value`. This value can be tested
 for with a function `no-value-p`.
 
+#### Registry
+
+TODO
+
 #### Data table
 
-A data table is a hash table wrapper entity, created with the function
+A data table is a property list generalization entity, 
+created with the function
 
 ```lisp
 (make-data-table &rest data-plist)
