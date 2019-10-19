@@ -175,7 +175,31 @@ List of agent methods:
 
 ### Messenger
 
-TODO
+A messenger is an universal inter-agent communication interface, 
+designed to deliver messages to local and remote agents (i.e. not located in
+the current process).
+
+Messenger provides `(messenger-send messenger id msg)` operation,
+which takes recipient agent ID and message, and returns T or NIL in the case
+of success and fail, respectively. For this to work, messenger requires
+three registries: `site-registry`, `agent-registry` and `sender-registry`.
+
+`site-registry` holds entries of the form `<agent ID>:<site>`, where `site` is
+either `nil` or an agent location designator. Nil value means agent is local
+and can accept messages directly. `agent-registry` holds local agents by
+their IDs, and `sender-registry` holds site-specific sender functions by
+location designators.
+
+A messenger is constructed using function
+
+```lisp
+(make-messenger &key (site-registry (make-registry)) 
+                     (agent-registry (make-registry))
+                     (sender-registry (make-registry)))
+```
+
+The associated registries are accessed with `messenger-site-registry`,
+`messenger-agent-registry`, `messenger-sender-registry`, respectively.
 
 ### Miscellaneous
 
@@ -188,30 +212,41 @@ for with a function `no-value-p`.
 
 #### Registry
 
-TODO
-
-#### Data table
-
-A data table is a property list generalization entity, 
-created with the function
+A registry is a thread-safe wrapper of hash table.
+It is created using function 
 
 ```lisp
-(make-data-table &rest data-plist)
+(make-registry &optional default-value (value-test #'equal))
 ```
 
-where `data-plist` is used to initialize the internal hash table.
+where: `default-value` -- value returned when accessing non-existent
+entry; `value-test` -- function used to test equality of the new value with
+the default value in `setf`-accessor (needed to decide if the entry should
+be deleted).
 
-The table entries can be read and written with the following accessors:
+Registry provides the following accessors and operations:
 
-* `(data-table-field data-table key &optional (default +no-value+))` -- 
-generalized variable for entry denoted by `key`;
+* `(registry-default-value registry)` -- read/write accessor for 
+`default-value`;
 
-* `(data-table-read-fields data-table fn)` -- call function `fn` and give it
-the internal hash table as a parameter for reading, the function should not 
-modify the table and its entries;
+* `(registry-value-test registry)` -- read/write accessor for `value-test`;
 
-* `(data-table-write-fields data-table fn)` -- call function `fn` and give it
-the internal hash table as a parameter for writing.
+* `(registry-entry registry key &optional (default +no-value+))` -- 
+read/write accessor for a value denoted by `key` (if there is no such
+key, and if `default` is supplied, it is returned, otherwise `default-value`
+is returned);
+
+* `(registry-keys registry)` -- get list of all entry keys in the registry;
+
+* `(registry-entry-present-p registry key)` -- test if an entry with such key
+is in the registry;
+
+* `(registry-map-entries registry fn)` -- call `fn` for each 
+entry key and value of the entry;
+
+* `(registry-add-entry registry key value)` -- add entry to the registry;
+
+* `(registry-del-entry registry key)` -- delete entry from the registry.
 
 #### Synchronized queue
 

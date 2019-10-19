@@ -2,50 +2,31 @@
 
 (in-package #:cl-multiagent-system)
 
-(define-entity data-table 
-    (&rest data-plist &aux (table (alexandria:plist-hash-table data-plist)))
-    (:declarations ((type list data-plist) (type hash-table table)))
-
-  ((field (key &optional (default +no-value+)) :reads (table))
-   (gethash key table default))
-  (((setf field) (value key &optional default) :writes (table)
-                 :declarations ((ignore default)))
-   (if (no-value-p value)
-     (remhash key table)
-     (setf (gethash key table) value)))
-
-  ((read-fields (fn) :reads (table))
-   (funcall fn table))
-  ((write-fields (fn) :writes (table))
-   (funcall fn table)))
-
-;;-----------------------------------------------------------------------------
-
 (defparameter *agent-loop-fn-ctor* 
   (constantly nil))
 (defparameter *agent-start-fn-ctor* 
   (constantly nil))
 (defparameter *agent-stop-fn-ctor* 
   (constantly nil))
-(defparameter *agent-data-table-ctor* 
+(defparameter *agent-data-ctor* 
   (lambda (instance-id role-id)
     (declare (ignore instance-id role-id)) 
-    (make-data-table)))
+    (make-registry)))
 
 (define-entity agent
     (instance-id 
      &key role-id (loop-fn (funcall *agent-loop-fn-ctor* instance-id role-id)) 
           (start-fn (funcall *agent-start-fn-ctor* instance-id role-id)) 
           (stop-fn (funcall *agent-stop-fn-ctor* instance-id role-id))
-          (data-table (funcall *agent-data-table-ctor* instance-id role-id))
+          (data (funcall *agent-data-ctor* instance-id role-id))
           host-thread
      &aux (message-queue (make-queue :empty-value +no-value+)) running-p)
     (:declarations
       ((type (or null (function (agent))) loop-fn start-fn stop-fn)
        (type boolean running-p)))
 
-  instance-id role-id loop-fn start-fn stop-fn data-table host-thread running-p
-  (setf loop-fn) (setf start-fn) (setf stop-fn) (setf data-table)
+  instance-id role-id loop-fn start-fn stop-fn data host-thread running-p
+  (setf loop-fn) (setf start-fn) (setf stop-fn) (setf data)
   (((setf host-thread) (value) :writes (host-thread) :reads (running-p))
    (if running-p
      host-thread
