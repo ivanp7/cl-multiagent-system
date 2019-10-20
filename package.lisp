@@ -8,6 +8,7 @@
   (:export :*accessor-name-fn* :*constructor-name-fn* 
            :missing-value :+no-value+ :no-value-p
            :entity :define-entity :self 
+           :entity-accessor
 
            :define-thread :running-p :start :stop :destroy
 

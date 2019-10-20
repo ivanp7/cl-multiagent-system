@@ -9,6 +9,15 @@
 (defun type-definition (entity-type)
   `(deftype ,entity-type () 'entity))
 
+(defmacro entity-accessor (name entity &rest args)
+  (alexandria:once-only (name entity)
+    `(funcall ,entity (alexandria:make-keyword (symbol-name ,name)) 
+              +no-value+ ,@args)))
+
+(defsetf entity-accessor (name entity &rest args) (new-value)
+  `(funcall ,entity (alexandria:make-keyword (symbol-name ,name)) 
+            ,new-value ,@args))
+
 ;;;----------------------------------------------------------------------------
 
 (deftype missing-value () 'symbol)

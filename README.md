@@ -87,6 +87,21 @@ The macro defines:
 * setf expansions `<entity-type>-<setter-name>` -- setters 
 (name generator can be replaced: set `*accessor-name-fn*`).
 
+Also, there is a dynamic way of accessing entities using
+
+```lisp
+(entity-accessor name entity &rest args)
+```
+
+and
+
+```lisp
+(setf (entity-accessor name entity &rest args) value)
+```
+
+where `name` is an evaluated expression which must return name of accessor 
+from description in `define-entity`.
+
 Initialization and accessors body code can use `self` binding, which is
 assigned to the entity instance itself.
 
