@@ -11,6 +11,7 @@
   :serial t
   :components 
   ((:static-file "README.md")
+   (:static-file "LICENSE")
    (:file "package")
 
    (:file "entity-impl" :depends-on ("package"))

@@ -39,5 +39,6 @@
            :messenger-agent-registry :messenger-sender-registry
            :messenger-send
 
+           :*default-buffer-size* :*default-buffer-element-type*
            :make-stream-sender :make-stream-receiver))
 

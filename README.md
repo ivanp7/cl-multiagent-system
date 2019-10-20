@@ -233,8 +233,9 @@ and returns an updated buffer with serialized id and message in it.
 A receiver is made with
 
 ```lisp
-(make-stream-receiver deserializer stream lock &optional (buffer-size 1024)
-                      (buffer-element-type '(unsigned-byte 8)))
+(make-stream-receiver deserializer stream lock 
+                      &optional (buffer-size *default-buffer-size*)
+                      (buffer-element-type *default-buffer-element-type*))
 ```
 
 where `deserializer` is a function which takes buffer with received data
