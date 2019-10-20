@@ -34,10 +34,10 @@
 
   ((start () :reads (host-thread))
    (when host-thread
-     (funcall host-thread :start-agent self)))
+     (entity-accessor :start-agent host-thread self)))
   ((stop () :reads (host-thread))
    (when host-thread
-     (funcall host-thread :stop-agent self)))
+     (entity-accessor :stop-agent host-thread self)))
 
   ((message (&key keep))  ; no read-write lock, as queue is synchronized
    (if keep
@@ -63,9 +63,9 @@
          (loop
            (let ((running-p (multiagent-thread-running-p self))) 
              (if running-p
-               (dolist (agent (funcall self :get-started-agents))
-                 (funcall 
-                   self :add-thread
+               (dolist (agent (entity-accessor :get-started-agents self))
+                 (entity-accessor 
+                   :add-thread self
                    (gt:with-green-thread
                      (alexandria:when-let ((start-fn (agent-start-fn agent)))
                        (funcall start-fn agent))
@@ -81,10 +81,10 @@
                (multiagent-thread-map-agents
                  self
                  (lambda (agent)
-                   (funcall self :stop-agent agent))))
+                   (entity-accessor :stop-agent self agent))))
              (gt:thread-yield)
-             (dolist (agent (funcall self :get-stopped-agents))
-               (funcall self :del-thread agent))
+             (dolist (agent (entity-accessor :get-stopped-agents self))
+               (entity-accessor :del-thread self agent))
              (unless running-p
                (return)))))))
 
@@ -95,14 +95,14 @@
    t)
 
   ;; private interface
-  (((setf start-agent) (agent) :reads (agent-threads) :visibility :private)
+  ((start-agent (agent) :reads (agent-threads) :visibility :private)
    (unless (gethash agent agent-threads)
-     (funcall agent :running-p t)
+     (setf (entity-accessor :running-p agent) t)
      (queue-push start-queue agent)
      t))
-  (((setf stop-agent) (agent) :reads (agent-threads) :visibility :private)
+  ((stop-agent (agent) :reads (agent-threads) :visibility :private)
    (when (gethash agent agent-threads)
-     (funcall agent :running-p nil)
+     (setf (entity-accessor :running-p agent) nil)
      (queue-push stop-queue agent)
      t))
 
@@ -111,11 +111,11 @@
   ((get-stopped-agents () :visibility :private)
    (queue-pop-all stop-queue))
 
-  (((setf add-thread) (thread agent) :writes (agent-threads) 
+  ((add-thread (thread agent) :writes (agent-threads) 
                       :visibility :private)
    (unless (gethash agent agent-threads)
      (setf (gethash agent agent-threads) thread)
      t))
-  (((setf del-thread) (agent) :writes (agent-threads) :visibility :private)
+  ((del-thread (agent) :writes (agent-threads) :visibility :private)
    (remhash agent agent-threads)))
 
