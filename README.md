@@ -239,8 +239,8 @@ A receiver is made with
 ```
 
 where `deserializer` is a function which takes buffer with received data
-(probably incomplete or excess) and returns 3 values -- 
-`id`, `msg`, `deserialized-length` (exact used length of the buffer). 
+(probably incomplete or excess), data start and end indexes, and returns 3 
+values -- `id`, `msg`, `deserialized-length` (exact used length of the buffer). 
 Return values may be `nil` in case of incomplete input data.
 
 ### Miscellaneous
