@@ -37,5 +37,7 @@
 
            :messenger :make-messenger :messenger-site-registry
            :messenger-agent-registry :messenger-sender-registry
-           :messenger-send))
+           :messenger-send
+
+           :make-stream-sender :make-stream-receiver))
 

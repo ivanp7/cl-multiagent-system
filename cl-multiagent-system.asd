@@ -29,5 +29,6 @@
    (:file "queue" :depends-on ("package"))
    (:file "registry" :depends-on ("package"))
    (:file "agent" :depends-on ("thread" "queue" "registry"))
-   (:file "messenger" :depends-on ("registry" "agent"))))
+   (:file "messenger" :depends-on ("registry" "agent"))
+   (:file "stream" :depends-on ("package"))))
 

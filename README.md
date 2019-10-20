@@ -195,8 +195,8 @@ designed to deliver messages to local and remote agents (i.e. not located in
 the current process).
 
 Messenger provides `(messenger-send messenger id msg)` operation,
-which takes recipient agent ID and message, and returns T or NIL in the case
-of success and fail, respectively. For this to work, messenger requires
+which takes recipient agent ID and message, and returns `t` or `nil` in the 
+case of success and fail, respectively. For this to work, messenger requires 
 three registries: `site-registry`, `agent-registry` and `sender-registry`.
 
 `site-registry` holds entries of the form `<agent ID>:<site>`, where `site` is
@@ -215,6 +215,32 @@ A messenger is constructed using function
 
 The associated registries are accessed with `messenger-site-registry`,
 `messenger-agent-registry`, `messenger-sender-registry`, respectively.
+
+#### Stream sender and receiver
+
+The library provides constructor functions for message senders and receivers 
+which communicate over streams.
+
+A sender is made with
+
+```lisp
+(make-stream-sender serializer stream lock)
+```
+
+where `serializer` is a function which takes recipient id, message and buffer 
+and returns an updated buffer with serialized id and message in it.
+
+A receiver is made with
+
+```lisp
+(make-stream-receiver deserializer stream lock &optional (buffer-size 1024)
+                      (buffer-element-type '(unsigned-byte 8)))
+```
+
+where `deserializer` is a function which takes buffer with received data
+(probably incomplete or excess) and returns 3 values -- 
+`id`, `msg`, `deserialized-length` (exact used length of the buffer). 
+Return values may be `nil` in case of incomplete input data.
 
 ### Miscellaneous
 
