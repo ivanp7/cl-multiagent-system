@@ -221,7 +221,8 @@ The associated registries are accessed with `messenger-site-registry`,
 The library provides constructor functions for message senders and receivers 
 which communicate over streams.
 
-A sender is made with
+A sender (lambda which takes recipient id and message and sends the latter
+to the recipient) is made with
 
 ```lisp
 (make-stream-sender serializer stream lock)
@@ -230,7 +231,9 @@ A sender is made with
 where `serializer` is a function which takes recipient id, message and buffer 
 and returns an updated buffer with serialized id and message in it.
 
-A receiver is made with
+A receiver (two lambda functions: a 'stream reader'/'buffer accumulator'
+and a 'deserializer caller'/'buffer consumer', both take no arguments) 
+is made with
 
 ```lisp
 (make-stream-receiver deserializer stream lock 
