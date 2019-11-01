@@ -25,7 +25,7 @@
         (buffer-lock (bt:make-lock)) (buffer-start 0) (buffer-end 0) 
         buffer-changed)
     (values
-      ;; deserialize received bytes
+      ;; receive bytes from stream
       (lambda ()
         (bt:with-lock-held (stream-lock)
           (when (listen stream)
